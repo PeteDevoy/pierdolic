@@ -1,0 +1,949 @@
+{
+  "id": "pierdolic",
+  "lemma": "pierdolić",
+  "root": "pierdol",
+  "prefix": null,
+  "aspect": "imperfective",
+  "reflexive": false,
+  "register": "vulgar",
+  "glosses": [
+    "to talk bullshit or ramble nonsense",
+    "to disregard something, as in 'fuck it'",
+    "to fuck or mess around with something or someone"
+  ],
+  "examples": [
+    {
+      "polish": "On znowu pierdoli o polityce.",
+      "literalEnglish": "He again fucks about politics.",
+      "naturalEnglish": "He's rambling crap about politics again."
+    },
+    {
+      "polish": "Ja to pierdolę, idę do domu.",
+      "literalEnglish": "I this fuck, I am going home.",
+      "naturalEnglish": "Fuck this, I'm going home."
+    }
+  ],
+  "notes": "Highly polysemous vulgar root. The intended meaning depends strongly on syntax, object choice, and tone. The sample glosses focus on common colloquial uses rather than exhausting the full semantic range.",
+  "conjugation": {
+    "nonPast1sg": "pierdolę",
+    "nonPast2sg": "pierdolisz",
+    "nonPast3sg": "pierdoli",
+    "pastMascSg": "pierdolił",
+    "imperative2sg": "pierdol"
+  },
+  "partnerId": null,
+  "derivation": "base lexical root",
+  "children": [
+    {
+      "id": "dopierdolic",
+      "lemma": "dopierdolić",
+      "root": "pierdol",
+      "prefix": "do-",
+      "aspect": "perfective",
+      "reflexive": false,
+      "register": "vulgar",
+      "glosses": [
+        "to add a lot more; pile on excessively",
+        "to land a hard verbal or physical hit"
+      ],
+      "examples": [
+        {
+          "polish": "Nie dopierdol jeszcze więcej chilli, bo nikt tego nie zje.",
+          "literalEnglish": "Do not add-fuck still more chilli, because nobody this will-eat.",
+          "naturalEnglish": "Don't dump in even more chilli or nobody will eat it."
+        },
+        {
+          "polish": "Na końcu dopierdolił mu tekstem o spóźnieniach.",
+          "literalEnglish": "At the end he hit him with a line about latenesses.",
+          "naturalEnglish": "At the end he really laid into him about being late."
+        }
+      ],
+      "notes": "Often suggests excess, final force, or an emphatic last move. In perfective use, the non-past forms usually refer to the future.",
+      "conjugation": {
+        "nonPast1sg": "dopierdolę",
+        "nonPast3sg": "dopierdoli",
+        "pastMascSg": "dopierdolił",
+        "imperative2sg": "dopierdol"
+      },
+      "partnerId": "dopierdalac",
+      "derivation": "prefixation + perfectivization",
+      "children": [
+        {
+          "id": "dopierdalac",
+          "lemma": "dopierdalać",
+          "root": "pierdol",
+          "prefix": "do-",
+          "aspect": "imperfective",
+          "reflexive": false,
+          "register": "vulgar",
+          "glosses": [
+            "to keep piling more onto something",
+            "to keep laying into someone"
+          ],
+          "examples": [
+            {
+              "polish": "Szef cały tydzień dopierdala nam nowe poprawki.",
+              "literalEnglish": "The boss all week keeps-adding-fuck to-us new corrections.",
+              "naturalEnglish": "The boss has been piling new revisions on us all week."
+            }
+          ],
+          "notes": "Secondary imperfective built on the perfective partner dopierdolić.",
+          "conjugation": {
+            "nonPast1sg": "dopierdalam",
+            "nonPast3sg": "dopierdala"
+          },
+          "partnerId": "dopierdolic",
+          "derivation": "secondary imperfectivization",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "przypierdolic",
+      "lemma": "przypierdolić",
+      "root": "pierdol",
+      "prefix": "przy-",
+      "aspect": "perfective",
+      "reflexive": false,
+      "register": "vulgar",
+      "glosses": [
+        "to slam or hit hard",
+        "to attach or place something roughly",
+        "to throw a cutting remark at someone"
+      ],
+      "examples": [
+        {
+          "polish": "Przypierdolił drzwiami tak mocno, że wypadła szyba.",
+          "literalEnglish": "He hit-with the door so hard that fell-out the pane.",
+          "naturalEnglish": "He slammed the door so hard the pane popped out."
+        }
+      ],
+      "notes": "A productive slang form with physical and metaphorical uses. The specific reading depends on the object or complement.",
+      "conjugation": {
+        "nonPast1sg": "przypierdolę",
+        "nonPast3sg": "przypierdoli"
+      },
+      "partnerId": null,
+      "derivation": "prefixation + perfectivization",
+      "children": [
+        {
+          "id": "przypierdalac-sie",
+          "lemma": "przypierdalać się",
+          "root": "pierdol",
+          "prefix": "przy-",
+          "aspect": "imperfective",
+          "reflexive": true,
+          "register": "vulgar",
+          "glosses": [
+            "to pick on someone",
+            "to nitpick or hassle someone over details"
+          ],
+          "examples": [
+            {
+              "polish": "Nie przypierdalaj się do każdego przecinka.",
+              "literalEnglish": "Do not pick-fuck-yourself to every comma.",
+              "naturalEnglish": "Stop nitpicking every comma."
+            }
+          ],
+          "notes": "Lexicalized reflexive use. The reflexive marker carries an idiomatic interpersonal meaning rather than literal self-action.",
+          "conjugation": {
+            "nonPast1sg": "przypierdalam się",
+            "nonPast3sg": "przypierdala się"
+          },
+          "partnerId": null,
+          "derivation": "reflexivization + idiomatic extension",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "rozpierdolic",
+      "lemma": "rozpierdolić",
+      "root": "pierdol",
+      "prefix": "roz-",
+      "aspect": "perfective",
+      "reflexive": false,
+      "register": "very vulgar",
+      "glosses": [
+        "to smash something to pieces",
+        "to scatter things all over",
+        "to blow someone's mind in slangy positive use"
+      ],
+      "examples": [
+        {
+          "polish": "Jednym ruchem rozpierdolił stary monitor.",
+          "literalEnglish": "With one move he smashed-fuck the old monitor.",
+          "naturalEnglish": "With one move he smashed the old monitor."
+        },
+        {
+          "polish": "Dzieci rozpierdoliły zabawki po całym pokoju.",
+          "literalEnglish": "The children scattered-fuck the toys across the whole room.",
+          "naturalEnglish": "The kids scattered the toys all over the room."
+        }
+      ],
+      "notes": "Very strong slang item. The force can be literal destruction, complete disorder, or emphatic impact.",
+      "conjugation": {
+        "nonPast1sg": "rozpierdolę",
+        "nonPast3sg": "rozpierdoli"
+      },
+      "partnerId": "rozpierdalac",
+      "derivation": "prefixation + perfectivization",
+      "children": [
+        {
+          "id": "rozpierdalac",
+          "lemma": "rozpierdalać",
+          "root": "pierdol",
+          "prefix": "roz-",
+          "aspect": "imperfective",
+          "reflexive": false,
+          "register": "very vulgar",
+          "glosses": [
+            "to keep tearing apart or wrecking",
+            "to keep spreading something everywhere"
+          ],
+          "examples": [
+            {
+              "polish": "Ten bas rozpierdala mi głośniki.",
+              "literalEnglish": "This bass keeps-wrecking-fuck my speakers.",
+              "naturalEnglish": "That bass is blowing my speakers apart."
+            }
+          ],
+          "notes": "Secondary imperfective with ongoing or repeated-event meaning.",
+          "conjugation": {
+            "nonPast1sg": "rozpierdalam",
+            "nonPast3sg": "rozpierdala"
+          },
+          "partnerId": "rozpierdolic",
+          "derivation": "secondary imperfectivization",
+          "children": []
+        },
+        {
+          "id": "rozpierdolic-sie",
+          "lemma": "rozpierdolić się",
+          "root": "pierdol",
+          "prefix": "roz-",
+          "aspect": "perfective",
+          "reflexive": true,
+          "register": "very vulgar",
+          "glosses": [
+            "to crash badly",
+            "to sprawl or collapse heavily"
+          ],
+          "examples": [
+            {
+              "polish": "Rozpierdolił się na rowerze na mokrym zakręcie.",
+              "literalEnglish": "He crashed-fuck-himself on the bike on the wet bend.",
+              "naturalEnglish": "He wiped out on the bike on the wet curve."
+            }
+          ],
+          "notes": "Often used for spectacular falls or crashes, literal or metaphorical.",
+          "conjugation": {
+            "nonPast1sg": "rozpierdolę się",
+            "nonPast3sg": "rozpierdoli się"
+          },
+          "partnerId": null,
+          "derivation": "reflexivization",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "spierdolic",
+      "lemma": "spierdolić",
+      "root": "pierdol",
+      "prefix": "s-",
+      "aspect": "perfective",
+      "reflexive": false,
+      "register": "very vulgar",
+      "glosses": [
+        "to screw something up",
+        "to run off or disappear quickly",
+        "to send someone away rudely in certain constructions"
+      ],
+      "examples": [
+        {
+          "polish": "Spierdoliłem termin i klient się wkurzył.",
+          "literalEnglish": "I screwed-fuck the deadline and the client got angry.",
+          "naturalEnglish": "I fucked up the deadline and the client got angry."
+        },
+        {
+          "polish": "Po kolacji po prostu spierdolił z imprezy.",
+          "literalEnglish": "After dinner he simply ran-fuck from the party.",
+          "naturalEnglish": "After dinner he just bailed from the party."
+        }
+      ],
+      "notes": "A strong colloquial item with clearly different readings depending on transitivity and surrounding syntax.",
+      "conjugation": {
+        "nonPast1sg": "spierdolę",
+        "nonPast3sg": "spierdoli"
+      },
+      "partnerId": "spierdalac",
+      "derivation": "prefixation + perfectivization",
+      "children": [
+        {
+          "id": "spierdalac",
+          "lemma": "spierdalać",
+          "root": "pierdol",
+          "prefix": "s-",
+          "aspect": "imperfective",
+          "reflexive": false,
+          "register": "very vulgar",
+          "glosses": [
+            "to be running off",
+            "to be screwing things up repeatedly"
+          ],
+          "examples": [
+            {
+              "polish": "Jak usłyszeli syreny, zaczęli spierdalać.",
+              "literalEnglish": "When they heard sirens, they started running-fuck-away.",
+              "naturalEnglish": "When they heard the sirens, they started running off."
+            }
+          ],
+          "notes": "Often used as a harsh motion verb meaning to get out fast.",
+          "conjugation": {
+            "nonPast1sg": "spierdalam",
+            "nonPast3sg": "spierdala"
+          },
+          "partnerId": "spierdolic",
+          "derivation": "secondary imperfectivization",
+          "children": []
+        },
+        {
+          "id": "spierdolic-sie",
+          "lemma": "spierdolić się",
+          "root": "pierdol",
+          "prefix": "s-",
+          "aspect": "perfective",
+          "reflexive": true,
+          "register": "very vulgar",
+          "glosses": [
+            "to break down",
+            "to go badly wrong"
+          ],
+          "examples": [
+            {
+              "polish": "System spierdolił się po aktualizacji.",
+              "literalEnglish": "The system broke-fuck-itself after the update.",
+              "naturalEnglish": "The system broke after the update."
+            }
+          ],
+          "notes": "Common for software, machinery, or plans that fail abruptly.",
+          "conjugation": {
+            "nonPast1sg": "spierdolę się",
+            "nonPast3sg": "spierdoli się"
+          },
+          "partnerId": null,
+          "derivation": "reflexivization",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "wpierdolic",
+      "lemma": "wpierdolić",
+      "root": "pierdol",
+      "prefix": "w-",
+      "aspect": "perfective",
+      "reflexive": false,
+      "register": "very vulgar",
+      "glosses": [
+        "to shove or put something into something else forcefully",
+        "to eat something greedily",
+        "to slam something into an obstacle"
+      ],
+      "examples": [
+        {
+          "polish": "On potrafi wpierdolić pół blachy sernika sam.",
+          "literalEnglish": "He can eat-fuck half a tray of cheesecake alone.",
+          "naturalEnglish": "He can demolish half a tray of cheesecake on his own."
+        },
+        {
+          "polish": "Kierowca wpierdolił auto w barierkę.",
+          "literalEnglish": "The driver shoved-fuck the car into the barrier.",
+          "naturalEnglish": "The driver rammed the car into the guardrail."
+        }
+      ],
+      "notes": "Another highly contextual form. Object choice often makes the intended meaning obvious: food, insertion, or collision.",
+      "conjugation": {
+        "nonPast1sg": "wpierdolę",
+        "nonPast3sg": "wpierdoli"
+      },
+      "partnerId": "wpierdalac",
+      "derivation": "prefixation + perfectivization",
+      "children": [
+        {
+          "id": "wpierdalac",
+          "lemma": "wpierdalać",
+          "root": "pierdol",
+          "prefix": "w-",
+          "aspect": "imperfective",
+          "reflexive": false,
+          "register": "very vulgar",
+          "glosses": [
+            "to be stuffing oneself or eating noisily",
+            "to keep shoving something in"
+          ],
+          "examples": [
+            {
+              "polish": "Cały dzień wpierdala chipsy przed monitorem.",
+              "literalEnglish": "All day he eats-fuck chips in front of the monitor.",
+              "naturalEnglish": "He spends all day shoveling chips in front of the monitor."
+            }
+          ],
+          "notes": "Imperfective partner emphasizing repeated or ongoing action.",
+          "conjugation": {
+            "nonPast1sg": "wpierdalam",
+            "nonPast3sg": "wpierdala"
+          },
+          "partnerId": "wpierdolic",
+          "derivation": "secondary imperfectivization",
+          "children": []
+        },
+        {
+          "id": "wpierdolic-sie",
+          "lemma": "wpierdolić się",
+          "root": "pierdol",
+          "prefix": "w-",
+          "aspect": "perfective",
+          "reflexive": true,
+          "register": "very vulgar",
+          "glosses": [
+            "to barge in where one should not",
+            "to crash into something"
+          ],
+          "examples": [
+            {
+              "polish": "Wpierdolili się bez kolejki do gabinetu.",
+              "literalEnglish": "They barged-fuck-themselves without queue into the office.",
+              "naturalEnglish": "They barged into the office without waiting their turn."
+            },
+            {
+              "polish": "Rowerzysta wpierdolił się w kałużę.",
+              "literalEnglish": "The cyclist crashed-fuck-himself into a puddle.",
+              "naturalEnglish": "The cyclist crashed into a puddle."
+            }
+          ],
+          "notes": "Reflexive form that can describe either intrusive social entry or literal impact into an object or place.",
+          "conjugation": {
+            "nonPast1sg": "wpierdolę się",
+            "nonPast3sg": "wpierdoli się"
+          },
+          "partnerId": null,
+          "derivation": "reflexivization",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "napierdolic",
+      "lemma": "napierdolić",
+      "root": "pierdol",
+      "prefix": "na-",
+      "aspect": "perfective",
+      "reflexive": false,
+      "register": "very vulgar",
+      "glosses": [
+        "to hit repeatedly or very hard",
+        "to produce or play something very loudly",
+        "to pile up or do a great deal of something"
+      ],
+      "examples": [
+        {
+          "polish": "Napierdolił go kilka razy, zanim ktoś ich rozdzielił.",
+          "literalEnglish": "He hit-fuck him several times before somebody separated them.",
+          "naturalEnglish": "He hit him several times before somebody pulled them apart."
+        },
+        {
+          "polish": "Sąsiad od rana napierdolił muzyką tak głośno, że nie dało się spać.",
+          "literalEnglish": "The neighbour since morning blasted-fuck with music so loudly that it was not possible to sleep.",
+          "naturalEnglish": "The neighbour blasted music so loudly all morning that it was impossible to sleep."
+        },
+        {
+          "polish": "W weekend napierdoliłem tyle kilometrów, że ledwo czuję nogi.",
+          "literalEnglish": "At the weekend I did-fuck so many kilometres that I barely feel my legs.",
+          "naturalEnglish": "I covered so many kilometres over the weekend that I can barely feel my legs."
+        }
+      ],
+      "notes": "Strongly emphatic form often implying large quantity, repeated impact, or excessive intensity. Common in contexts of fighting, noise, work, motion, or physical output.",
+      "conjugation": {
+        "nonPast1sg": "napierdolę",
+        "nonPast3sg": "napierdoli",
+        "pastMascSg": "napierdolił",
+        "imperative2sg": "napierdol"
+      },
+      "partnerId": "napierdalac",
+      "derivation": "prefixation + perfectivization",
+      "children": [
+        {
+          "id": "napierdalac",
+          "lemma": "napierdalać",
+          "root": "pierdol",
+          "prefix": "na-",
+          "aspect": "imperfective",
+          "reflexive": false,
+          "register": "very vulgar",
+          "glosses": [
+            "to keep hitting repeatedly",
+            "to be blasting loudly",
+            "to keep doing something intensely or at high speed"
+          ],
+          "examples": [
+            {
+              "polish": "Ktoś cały czas napierdala w kaloryfer na klatce.",
+              "literalEnglish": "Somebody all the time keeps-hitting-fuck at the radiator in the stairwell.",
+              "naturalEnglish": "Someone keeps banging on the radiator in the stairwell."
+            },
+            {
+              "polish": "Deszcz napierdalał w szyby przez całą noc.",
+              "literalEnglish": "The rain kept-hitting-fuck at the windows through the whole night.",
+              "naturalEnglish": "The rain kept hammering against the windows all night."
+            },
+            {
+              "polish": "Od miesiąca napierdalam nad tym projektem bez przerwy.",
+              "literalEnglish": "For a month I keep-working-fuck over this project without a break.",
+              "naturalEnglish": "I've been grinding away at this project nonstop for a month."
+            }
+          ],
+          "notes": "Secondary imperfective with ongoing, repeated, or habitual force. Very productive in colloquial speech, including metaphorical uses for work, noise, weather, and movement.",
+          "conjugation": {
+            "nonPast1sg": "napierdalam",
+            "nonPast3sg": "napierdala"
+          },
+          "partnerId": "napierdolic",
+          "derivation": "secondary imperfectivization",
+          "children": []
+        },
+        {
+          "id": "napierdolic-sie",
+          "lemma": "napierdolić się",
+          "root": "pierdol",
+          "prefix": "na-",
+          "aspect": "perfective",
+          "reflexive": true,
+          "register": "very vulgar",
+          "glosses": [
+            "to get very drunk",
+            "to crash into each other or get into a fight in some contexts"
+          ],
+          "examples": [
+            {
+              "polish": "Na weselu napierdolili się już przed północą.",
+              "literalEnglish": "At the wedding they got-fuck-themselves already before midnight.",
+              "naturalEnglish": "They got completely smashed at the wedding before midnight."
+            },
+            {
+              "polish": "Po meczu dwie grupy napierdoliły się pod stadionem.",
+              "literalEnglish": "After the match two groups hit-fuck-themselves under the stadium.",
+              "naturalEnglish": "After the match two groups got into a fight outside the stadium."
+            }
+          ],
+          "notes": "Often means to get heavily intoxicated, especially with alcohol. In some contexts it can also indicate violent mutual confrontation.",
+          "conjugation": {
+            "nonPast1sg": "napierdolę się",
+            "nonPast3sg": "napierdoli się"
+          },
+          "partnerId": "napierdalac-sie",
+          "derivation": "reflexivization",
+          "children": [
+            {
+              "id": "napierdalac-sie",
+              "lemma": "napierdalać się",
+              "root": "pierdol",
+              "prefix": "na-",
+              "aspect": "imperfective",
+              "reflexive": true,
+              "register": "very vulgar",
+              "glosses": [
+                "to be fighting with each other",
+                "to keep getting wasted or drunk in a repeated way"
+              ],
+              "examples": [
+                {
+                  "polish": "Znowu napierdalają się na parkingu przez jakieś głupoty.",
+                  "literalEnglish": "Again they are hitting-fuck-themselves in the car park over some stupid things.",
+                  "naturalEnglish": "They're fighting in the car park again over some stupid nonsense."
+                },
+                {
+                  "polish": "Cały weekend napierdalali się w akademiku zamiast odpocząć.",
+                  "literalEnglish": "The whole weekend they were getting-fuck-themselves in the dorm instead of resting.",
+                  "naturalEnglish": "They spent the whole weekend getting wasted in the dorm instead of resting."
+                }
+              ],
+              "notes": "Imperfective reflexive form with reciprocal or repeated-event meaning. Most often used for fighting, but can also refer to repeated heavy drinking in slangy contexts.",
+              "conjugation": {
+                "nonPast1sg": "napierdalam się",
+                "nonPast3sg": "napierdala się"
+              },
+              "partnerId": "napierdolic-sie",
+              "derivation": "secondary imperfectivization + reflexivization",
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wypierdolic",
+      "lemma": "wypierdolić",
+      "root": "pierdol",
+      "prefix": "wy-",
+      "aspect": "perfective",
+      "reflexive": false,
+      "register": "very vulgar",
+      "glosses": [
+        "to throw something out forcefully",
+        "to fire or kick someone out",
+        "to make something suddenly jut out or shoot outward in some contexts"
+      ],
+      "examples": [
+        {
+          "polish": "Wypierdolił stare krzesło na śmietnik bez zastanowienia.",
+          "literalEnglish": "He threw-fuck the old chair onto the rubbish without thinking.",
+          "naturalEnglish": "He chucked the old chair out onto the rubbish heap without thinking."
+        },
+        {
+          "polish": "Szef go wypierdolił po trzecim spóźnieniu.",
+          "literalEnglish": "The boss threw-fuck him out after the third lateness.",
+          "naturalEnglish": "The boss fired him after the third time he was late."
+        }
+      ],
+      "notes": "Usually implies forceful expulsion outward, whether of an object, a person, or something metaphorically removed from a place or role.",
+      "conjugation": {
+        "nonPast1sg": "wypierdolę",
+        "nonPast3sg": "wypierdoli",
+        "pastMascSg": "wypierdolił",
+        "imperative2sg": "wypierdol"
+      },
+      "partnerId": "wypierdalac",
+      "derivation": "prefixation + perfectivization",
+      "children": [
+        {
+          "id": "wypierdalac",
+          "lemma": "wypierdalać",
+          "root": "pierdol",
+          "prefix": "wy-",
+          "aspect": "imperfective",
+          "reflexive": false,
+          "register": "very vulgar",
+          "glosses": [
+            "to keep throwing things out",
+            "to keep kicking someone out",
+            "to fuck off or get out in imperative and motion uses"
+          ],
+          "examples": [
+            {
+              "polish": "Wypierdalaj z mojego pokoju.",
+              "literalEnglish": "Throw-fuck-yourself-out from my room.",
+              "naturalEnglish": "Get the fuck out of my room."
+            },
+            {
+              "polish": "Co tydzień wypierdalam stare kartony z piwnicy.",
+              "literalEnglish": "Every week I keep-throwing-fuck old boxes from the basement.",
+              "naturalEnglish": "Every week I throw old boxes out of the basement."
+            }
+          ],
+          "notes": "Very common as a harsh imperative telling someone to leave. Outside that, it keeps the ongoing or repeated sense of expulsion.",
+          "conjugation": {
+            "nonPast1sg": "wypierdalam",
+            "nonPast3sg": "wypierdala"
+          },
+          "partnerId": "wypierdolic",
+          "derivation": "secondary imperfectivization",
+          "children": []
+        },
+        {
+          "id": "wypierdolic-sie",
+          "lemma": "wypierdolić się",
+          "root": "pierdol",
+          "prefix": "wy-",
+          "aspect": "perfective",
+          "reflexive": true,
+          "register": "very vulgar",
+          "glosses": [
+            "to fall over badly",
+            "to crash violently"
+          ],
+          "examples": [
+            {
+              "polish": "Wypierdolił się na lodzie pod sklepem.",
+              "literalEnglish": "He fell-fuck-himself on the ice under the shop.",
+              "naturalEnglish": "He went arse over tit on the ice outside the shop."
+            },
+            {
+              "polish": "Motocyklista wypierdolił się na zakręcie.",
+              "literalEnglish": "The motorcyclist crashed-fuck-himself on the bend.",
+              "naturalEnglish": "The motorcyclist crashed on the bend."
+            }
+          ],
+          "notes": "A very common reflexive crash/fall verb in colloquial speech, often for sudden and messy loss of balance or control.",
+          "conjugation": {
+            "nonPast1sg": "wypierdolę się",
+            "nonPast3sg": "wypierdoli się"
+          },
+          "partnerId": "wypierdalac-sie",
+          "derivation": "reflexivization",
+          "children": [
+            {
+              "id": "wypierdalac-sie",
+              "lemma": "wypierdalać się",
+              "root": "pierdol",
+              "prefix": "wy-",
+              "aspect": "imperfective",
+              "reflexive": true,
+              "register": "very vulgar",
+              "glosses": [
+                "to keep falling over",
+                "to keep crashing or wiping out"
+              ],
+              "examples": [
+                {
+                  "polish": "Na tych schodach ludzie ciągle się wypierdalają.",
+                  "literalEnglish": "On these stairs people keep falling-fuck-themselves.",
+                  "naturalEnglish": "People keep falling over on those stairs."
+                }
+              ],
+              "notes": "Imperfective reflexive partner with repeated-event meaning.",
+              "conjugation": {
+                "nonPast1sg": "wypierdalam się",
+                "nonPast3sg": "wypierdala się"
+              },
+              "partnerId": "wypierdolic-sie",
+              "derivation": "secondary imperfectivization + reflexivization",
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "zapierdolic",
+      "lemma": "zapierdolić",
+      "root": "pierdol",
+      "prefix": "za-",
+      "aspect": "perfective",
+      "reflexive": false,
+      "register": "very vulgar",
+      "glosses": [
+        "to steal something",
+        "to hit very hard",
+        "to drive, throw, or move something very fast in some contexts"
+      ],
+      "examples": [
+        {
+          "polish": "Ktoś mi zapierdolił rower spod klatki.",
+          "literalEnglish": "Someone stole-fuck me the bike from under the stairwell.",
+          "naturalEnglish": "Someone nicked my bike from outside the building."
+        },
+        {
+          "polish": "Jak mu zapierdolę, to się nauczy.",
+          "literalEnglish": "If I hit-fuck him, then he will learn.",
+          "naturalEnglish": "If I smack him, he'll learn."
+        }
+      ],
+      "notes": "One of the common high-intensity colloquial forms. Theft is a very salient reading, but force and speed also appear depending on the object and syntax.",
+      "conjugation": {
+        "nonPast1sg": "zapierdolę",
+        "nonPast3sg": "zapierdoli",
+        "pastMascSg": "zapierdolił",
+        "imperative2sg": "zapierdol"
+      },
+      "partnerId": "zapierdalac",
+      "derivation": "prefixation + perfectivization",
+      "children": [
+        {
+          "id": "zapierdalac",
+          "lemma": "zapierdalać",
+          "root": "pierdol",
+          "prefix": "za-",
+          "aspect": "imperfective",
+          "reflexive": false,
+          "register": "very vulgar",
+          "glosses": [
+            "to work very hard",
+            "to move very fast",
+            "to keep doing something with intense effort"
+          ],
+          "examples": [
+            {
+              "polish": "Cały tydzień zapierdalam po dwanaście godzin dziennie.",
+              "literalEnglish": "The whole week I keep-working-fuck for twelve hours daily.",
+              "naturalEnglish": "I've been working my arse off twelve hours a day all week."
+            },
+            {
+              "polish": "Ten pociąg zapierdala przez pół kraju bez postoju.",
+              "literalEnglish": "This train speeds-fuck through half the country without a stop.",
+              "naturalEnglish": "That train tears across half the country without stopping."
+            }
+          ],
+          "notes": "Very common for strenuous work or very rapid motion. Strong, vulgar, but highly productive in everyday colloquial speech.",
+          "conjugation": {
+            "nonPast1sg": "zapierdalam",
+            "nonPast3sg": "zapierdala"
+          },
+          "partnerId": "zapierdolic",
+          "derivation": "secondary imperfectivization",
+          "children": []
+        },
+        {
+          "id": "zapierdolic-sie",
+          "lemma": "zapierdolić się",
+          "root": "pierdol",
+          "prefix": "za-",
+          "aspect": "perfective",
+          "reflexive": true,
+          "register": "very vulgar",
+          "glosses": [
+            "to get crammed full or blocked up",
+            "to crash into something in some contexts"
+          ],
+          "examples": [
+            {
+              "polish": "Kibel się zapierdolił i znowu trzeba dzwonić po hydraulika.",
+              "literalEnglish": "The toilet blocked-fuck-itself and again one must call for the plumber.",
+              "naturalEnglish": "The toilet got completely blocked up again, so we need to call the plumber."
+            },
+            {
+              "polish": "Na śliskim asfalcie zapierdolił się w barierkę.",
+              "literalEnglish": "On the slippery asphalt he crashed-fuck-himself into the barrier.",
+              "naturalEnglish": "On the slippery road he slammed into the barrier."
+            }
+          ],
+          "notes": "The blocked-up reading is especially common with pipes, toilets, and other things that jam or clog. Impact readings occur too, but are more context-dependent.",
+          "conjugation": {
+            "nonPast1sg": "zapierdolę się",
+            "nonPast3sg": "zapierdoli się"
+          },
+          "partnerId": "zapierdalac-sie",
+          "derivation": "reflexivization",
+          "children": [
+            {
+              "id": "zapierdalac-sie",
+              "lemma": "zapierdalać się",
+              "root": "pierdol",
+              "prefix": "za-",
+              "aspect": "imperfective",
+              "reflexive": true,
+              "register": "very vulgar",
+              "glosses": [
+                "to keep working oneself ragged",
+                "to keep getting clogged up or jammed"
+              ],
+              "examples": [
+                {
+                  "polish": "Nie będę się tak zapierdalać za te pieniądze.",
+                  "literalEnglish": "I will not keep-working-fuck-myself like this for that money.",
+                  "naturalEnglish": "I'm not going to work myself into the ground for that money."
+                }
+              ],
+              "notes": "This reflexive imperfective often shades toward self-exhaustion or burdensome overexertion.",
+              "conjugation": {
+                "nonPast1sg": "zapierdalam się",
+                "nonPast3sg": "zapierdala się"
+              },
+              "partnerId": "zapierdolic-sie",
+              "derivation": "secondary imperfectivization + reflexivization",
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "opierdolic",
+      "lemma": "opierdolić",
+      "root": "pierdol",
+      "prefix": "o-",
+      "aspect": "perfective",
+      "reflexive": false,
+      "register": "very vulgar",
+      "glosses": [
+        "to scold someone harshly",
+        "to eat something up quickly"
+      ],
+      "examples": [
+        {
+          "polish": "Szef mnie opierdolił przy całym zespole.",
+          "literalEnglish": "The boss scolded-fuck me in front of the whole team.",
+          "naturalEnglish": "The boss tore me off a strip in front of the whole team."
+        },
+        {
+          "polish": "On sam opierdolił całą pizzę w dziesięć minut.",
+          "literalEnglish": "He himself ate-fuck the whole pizza in ten minutes.",
+          "naturalEnglish": "He demolished the whole pizza by himself in ten minutes."
+        }
+      ],
+      "notes": "A common slang form, especially for getting told off. The food reading is also widespread in colloquial use.",
+      "conjugation": {
+        "nonPast1sg": "opierdolę",
+        "nonPast3sg": "opierdoli",
+        "pastMascSg": "opierdolił",
+        "imperative2sg": "opierdol"
+      },
+      "partnerId": "opierdalac",
+      "derivation": "prefixation + perfectivization",
+      "children": [
+        {
+          "id": "opierdalac",
+          "lemma": "opierdalać",
+          "root": "pierdol",
+          "prefix": "o-",
+          "aspect": "imperfective",
+          "reflexive": false,
+          "register": "very vulgar",
+          "glosses": [
+            "to keep scolding or chewing someone out",
+            "to keep eating something greedily"
+          ],
+          "examples": [
+            {
+              "polish": "Ojciec codziennie opierdala go za bałagan.",
+              "literalEnglish": "The father every day keeps-scolding-fuck him for the mess.",
+              "naturalEnglish": "His dad chews him out every day over the mess."
+            },
+            {
+              "polish": "Siedzi i opierdala chipsy przed serialem.",
+              "literalEnglish": "He sits and keeps-eating-fuck crisps in front of the series.",
+              "naturalEnglish": "He's sat there scoffing crisps in front of the telly."
+            }
+          ],
+          "notes": "Straightforward imperfective partner for repeated scolding or habitual greedy eating.",
+          "conjugation": {
+            "nonPast1sg": "opierdalam",
+            "nonPast3sg": "opierdala"
+          },
+          "partnerId": "opierdolic",
+          "derivation": "secondary imperfectivization",
+          "children": []
+        },
+        {
+          "id": "opierdalac-sie",
+          "lemma": "opierdalać się",
+          "root": "pierdol",
+          "prefix": "o-",
+          "aspect": "imperfective",
+          "reflexive": true,
+          "register": "very vulgar",
+          "glosses": [
+            "to slack off",
+            "to mess about instead of working"
+          ],
+          "examples": [
+            {
+              "polish": "Przestań się opierdalać i kończ raport.",
+              "literalEnglish": "Stop slacking-fuck-yourself and finish the report.",
+              "naturalEnglish": "Stop arsing about and finish the report."
+            }
+          ],
+          "notes": "Highly common lexicalized reflexive meaning to shirk effort or avoid getting on with a task.",
+          "conjugation": {
+            "nonPast1sg": "opierdalam się",
+            "nonPast3sg": "opierdala się"
+          },
+          "partnerId": null,
+          "derivation": "reflexivization + idiomatic extension",
+          "children": []
+        }
+      ]
+    }
+  ]
+}
