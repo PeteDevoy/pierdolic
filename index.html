@@ -5,42 +5,51 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Pierdolę to...</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/d3@7" defer></script>
     <script src="main.js" defer></script>
   </head>
   <body>
     <div class="page-shell">
-      <main class="microsite-layout">
-        <section class="surface visualization-surface" aria-label="Verb family visualization">
-          <div class="stage-toolbar">
-            <div class="stage-actions">
-              <div class="controls" aria-label="Tree controls">
-                <button id="expand-all" type="button">Expand all</button>
-                <button id="collapse-derived" type="button">Collapse sub-branches</button>
-              </div>
-            </div>
+      <main class="mobile-explorer">
+        <section class="navigator-surface" aria-label="Verb family navigator">
+          <div class="tree-toggle" aria-label="Current variation selector">
+            <div id="branch-title" class="branch-title">Loading...</div>
+            <button
+              id="tree-toggle"
+              class="tree-toggle-button"
+              type="button"
+              aria-expanded="false"
+              aria-controls="tree-overlay"
+              aria-label="Open variation tree"
+            >
+              <span class="tree-toggle-icon" aria-hidden="true"></span>
+            </button>
           </div>
+          <div id="prefix-popover" class="prefix-popover" hidden></div>
+          <div class="selector-divider" aria-hidden="true"></div>
 
-          <div class="tree-stage" id="tree-stage">
-            <div class="legend legend-overlay" id="legend" aria-label="Visual legend"></div>
-            <svg id="tree" role="img" aria-labelledby="tree-desc">
-              <desc id="tree-desc">
-                A collapsible tree of the Polish verb pierdolić and selected derived forms, with aspect, reflexive
-                status, and register encoded visually.
-              </desc>
-            </svg>
-            <div class="tooltip" id="tooltip" hidden></div>
-          </div>
+          <div id="tree-overlay-backdrop" class="tree-overlay-backdrop" hidden></div>
+
+          <section id="tree-overlay" class="tree-overlay" aria-labelledby="tree-overlay-title" hidden>
+            <div class="tree-overlay-head">
+              <div>
+                <p class="tree-overlay-kicker">Variation tree</p>
+                <h2 id="tree-overlay-title">Select a form</h2>
+              </div>
+              <button id="tree-close" class="tree-close" type="button" aria-label="Close variation tree">
+                <span aria-hidden="true">×</span>
+              </button>
+            </div>
+            <p id="tree-path" class="tree-path"></p>
+            <div id="branch-list" class="tree-menu"></div>
+          </section>
         </section>
 
-        <aside class="surface details-surface" aria-labelledby="details-title">
+        <section class="selection-void" aria-label="Selected variation details">
           <div class="details-header">
-            <h2 id="details-title">Loading...</h2>
-            <p id="details-subtitle" class="surface-copy">Fetching verb family data.</p>
-            <div id="prefix-popover" class="prefix-popover" hidden></div>
+            <p id="details-subtitle" class="details-subtitle">Fetching lexical detail.</p>
           </div>
           <div id="details-panel" class="details-body"></div>
-        </aside>
+        </section>
       </main>
     </div>
   </body>

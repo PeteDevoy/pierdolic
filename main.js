@@ -1,11 +1,12 @@
 const DATA_URL = "data/verb-data.json";
 
 /*
-  The JSON schema is intentionally data-first:
-  every lexical form carries its own metadata, while the tree only encodes
-  derivational structure. Rendering is split into two layers:
-  1. normalization/transformation helpers for schema-safe data access
-  2. D3 rendering for the tree, tooltip, and details panel
+  Schema and rendering stay intentionally separate:
+  1. normalization/indexing helpers make the verb-family JSON safe to query
+  2. UI renderers turn the selected branch into a mobile drill-down explorer
+
+  This branch removes the D3 tree entirely in favor of a touch-first tree menu.
+  The same JSON can still support other verb families later.
 */
 
 const ASPECT_META = {
@@ -20,10 +21,6 @@ const REGISTER_META = {
   unspecified: { label: "Unspecified", color: "var(--register-unspecified)" }
 };
 
-/*
-  Prefix notes are kept separate from the verb-family data so the same
-  linguistic guide can be reused across different families in the future.
-*/
 const PREFIX_GUIDE = {
   "do-": {
     label: "do-",
@@ -159,21 +156,26 @@ const state = {
   root: null,
   selectedId: null,
   index: new Map(),
-  resizeFrame: null
+  parentIndex: new Map(),
+  prefixPopoverKey: null,
+  treeOpen: false,
+  expandedTreeIds: new Set()
 };
 
 const ui = {
-  legend: document.getElementById("legend"),
-  stage: document.getElementById("tree-stage"),
-  svg: d3.select("#tree"),
-  tooltip: d3.select("#tooltip"),
+  treeToggle: document.getElementById("tree-toggle"),
+  branchTitle: document.getElementById("branch-title"),
+  navigatorSurface: document.querySelector(".navigator-surface"),
+  treeOverlay: document.getElementById("tree-overlay"),
+  treeOverlayBackdrop: document.getElementById("tree-overlay-backdrop"),
+  treeOverlayTitle: document.getElementById("tree-overlay-title"),
+  treePath: document.getElementById("tree-path"),
+  treeClose: document.getElementById("tree-close"),
+  branchList: document.getElementById("branch-list"),
   detailsHeader: document.querySelector(".details-header"),
-  detailsTitle: document.getElementById("details-title"),
   detailsSubtitle: document.getElementById("details-subtitle"),
   prefixPopover: document.getElementById("prefix-popover"),
-  detailsPanel: document.getElementById("details-panel"),
-  expandButton: document.getElementById("expand-all"),
-  collapseButton: document.getElementById("collapse-derived")
+  detailsPanel: document.getElementById("details-panel")
 };
 
 document.addEventListener("DOMContentLoaded", initialize);
@@ -183,16 +185,14 @@ async function initialize() {
     const rawData = await loadVerbData(DATA_URL);
     const normalizedTree = normalizeVerbTree(rawData);
 
-    state.index = buildDataIndex(normalizedTree);
-    state.root = buildHierarchy(normalizedTree);
+    state.root = normalizedTree;
     state.selectedId = normalizedTree.id;
+    state.index = buildDataIndex(normalizedTree);
+    state.parentIndex = buildParentIndex(normalizedTree);
 
-    renderLegend();
     bindControls();
     bindPrefixPopover();
-    installResizeHandling();
-    renderSelectedNode(findVisibleNodeById(state.selectedId));
-    updateTree(state.root);
+    renderApp();
   } catch (error) {
     renderLoadError(error);
     console.error(error);
@@ -244,332 +244,270 @@ function normalizeVerbTree(node) {
 
 function buildDataIndex(rootData) {
   const index = new Map();
-
   walkDataTree(rootData, (node) => {
     index.set(node.id, node);
   });
-
   return index;
 }
 
-function buildHierarchy(treeData) {
-  const root = d3.hierarchy(treeData);
+function buildParentIndex(rootData) {
+  const parentIndex = new Map();
 
-  walkHierarchy(root, (node) => {
-    node._children = node.children || null;
-    node.x0 = 0;
-    node.y0 = 0;
+  walkDataTree(rootData, (node) => {
+    (node.children || []).forEach((child) => {
+      parentIndex.set(child.id, node.id);
+    });
   });
 
-  return root;
+  return parentIndex;
 }
 
 function bindControls() {
-  ui.expandButton.addEventListener("click", () => {
-    setExpansionDepth(Infinity);
-    updateTree(state.root);
+  ui.treeToggle.addEventListener("click", toggleTreeView);
+  ui.treeClose.addEventListener("click", closeTreeView);
+  ui.treeOverlayBackdrop.addEventListener("click", closeTreeView);
+
+  ui.branchList.addEventListener("click", (event) => {
+    const toggle = event.target.closest("[data-toggle-id]");
+
+    if (toggle) {
+      event.preventDefault();
+      toggleTreeNode(toggle.dataset.toggleId);
+      return;
+    }
+
+    const branchNode = event.target.closest("[data-select-id]");
+
+    if (!branchNode) {
+      return;
+    }
+
+    const branchId = branchNode.dataset.selectId;
+    if (branchId) {
+      selectBranch(branchId);
+    }
   });
 
-  ui.collapseButton.addEventListener("click", () => {
-    setExpansionDepth(1);
-    updateTree(state.root);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && state.treeOpen) {
+      closeTreeView();
+    }
   });
 }
 
 function bindPrefixPopover() {
-  ui.detailsHeader.addEventListener("pointerover", (event) => {
-    const prefixNode = event.target.closest(".details-title-prefix.is-interactive");
+  ui.navigatorSurface.addEventListener("click", (event) => {
+    const prefixNode = event.target.closest(".branch-title-prefix.is-interactive");
 
-    if (!prefixNode || !ui.detailsHeader.contains(prefixNode)) {
+    if (!prefixNode || !ui.navigatorSurface.contains(prefixNode)) {
+      if (!event.target.closest(".prefix-popover")) {
+        hidePrefixPopover();
+      }
       return;
     }
 
-    showPrefixPopover(prefixNode);
+    event.preventDefault();
+    togglePrefixPopover(prefixNode);
   });
 
-  ui.detailsHeader.addEventListener("pointerout", (event) => {
-    const prefixNode = event.target.closest(".details-title-prefix.is-interactive");
+  ui.navigatorSurface.addEventListener("keydown", (event) => {
+    const prefixNode = event.target.closest(".branch-title-prefix.is-interactive");
 
-    if (!prefixNode || !ui.detailsHeader.contains(prefixNode)) {
+    if (!prefixNode || !ui.navigatorSurface.contains(prefixNode)) {
       return;
     }
 
-    if (event.relatedTarget && prefixNode.contains(event.relatedTarget)) {
-      return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      togglePrefixPopover(prefixNode);
     }
 
-    hidePrefixPopover();
+    if (event.key === "Escape") {
+      hidePrefixPopover();
+    }
   });
 
-  ui.detailsHeader.addEventListener("focusin", (event) => {
-    const prefixNode = event.target.closest(".details-title-prefix.is-interactive");
-
-    if (!prefixNode || !ui.detailsHeader.contains(prefixNode)) {
-      return;
+  document.addEventListener("click", (event) => {
+    if (!ui.navigatorSurface.contains(event.target)) {
+      hidePrefixPopover();
     }
-
-    showPrefixPopover(prefixNode);
-  });
-
-  ui.detailsHeader.addEventListener("focusout", (event) => {
-    const prefixNode = event.target.closest(".details-title-prefix.is-interactive");
-
-    if (!prefixNode || !ui.detailsHeader.contains(prefixNode)) {
-      return;
-    }
-
-    if (event.relatedTarget && prefixNode.contains(event.relatedTarget)) {
-      return;
-    }
-
-    hidePrefixPopover();
   });
 }
 
-function installResizeHandling() {
-  const scheduleResize = () => {
-    if (state.resizeFrame) {
-      cancelAnimationFrame(state.resizeFrame);
-    }
+function renderApp() {
+  renderNavigator();
+  renderSelectedNode(state.index.get(state.selectedId));
+}
 
-    state.resizeFrame = requestAnimationFrame(() => {
-      state.resizeFrame = null;
-      if (state.root) {
-        updateTree(state.root);
-      }
-    });
-  };
+function renderNavigator() {
+  const selected = state.index.get(state.selectedId);
 
-  if ("ResizeObserver" in window) {
-    const observer = new ResizeObserver(scheduleResize);
-    observer.observe(ui.stage);
+  if (!selected) {
     return;
   }
 
-  window.addEventListener("resize", scheduleResize);
+  ui.branchTitle.innerHTML = formatBranchTitle(selected.lemma, selected.prefix);
+  ui.treeOverlayTitle.textContent = `Variations of ${state.root.lemma}`;
+  ui.treePath.textContent = getPath(state.selectedId)
+    .map((node) => node.lemma)
+    .join(" / ");
+  ui.treeToggle.setAttribute("aria-expanded", String(state.treeOpen));
+  ui.treeOverlay.hidden = !state.treeOpen;
+  ui.treeOverlayBackdrop.hidden = !state.treeOpen;
+  document.body.classList.toggle("tree-view-open", state.treeOpen);
+
+  renderTreeMenu();
 }
 
-function setExpansionDepth(maxDepth) {
-  walkHierarchy(state.root, (node) => {
-    if (!node._children) {
-      return;
+function renderTreeMenu() {
+  const rootChildren = Array.isArray(state.root?.children) ? state.root.children : [];
+
+  ui.branchList.innerHTML = `
+    <div class="tree-root-row${state.selectedId === state.root.id ? " is-selected" : ""}">
+      <button class="tree-root-select" type="button" data-select-id="${escapeHtml(state.root.id)}">
+        ${formatTreeWord(state.root)}
+      </button>
+    </div>
+    ${
+      rootChildren.length
+        ? `<ul class="tree-level tree-level-root">${renderTreeLevel(rootChildren, state.root, 1)}</ul>`
+        : `<div class="branch-empty"><span class="branch-empty-mark">—</span><p>No variations in this sample.</p></div>`
     }
-
-    node.children = node.depth < maxDepth || maxDepth === Infinity ? node._children : null;
-  });
+  `;
 }
 
-function updateTree(sourceNode) {
-  const treeLayout = d3.tree().nodeSize([62, 240]);
-  treeLayout(state.root);
+function renderTreeLevel(nodes, parentNode, depth) {
+  return nodes.map((node) => renderTreeNode(node, parentNode, depth)).join("");
+}
 
-  const visibleNodes = state.root.descendants();
-  const visibleLinks = state.root.links();
-  const margin = { top: 38, right: 210, bottom: 38, left: 34 };
-  const minX = d3.min(visibleNodes, (node) => node.x) || 0;
-  const maxX = d3.max(visibleNodes, (node) => node.x) || 0;
-  const maxY = d3.max(visibleNodes, (node) => node.y) || 0;
-  const stageWidth = Math.max(ui.stage.clientWidth, 780);
-  const svgWidth = Math.max(stageWidth, maxY + margin.left + margin.right);
-  const svgHeight = maxX - minX + margin.top + margin.bottom;
-  const origin = {
-    x: sourceNode?.x0 ?? sourceNode?.x ?? state.root.x ?? 0,
-    y: sourceNode?.y0 ?? sourceNode?.y ?? state.root.y ?? 0
-  };
+function renderTreeNode(node, parentNode, depth) {
+  const hasChildren = Array.isArray(node.children) && node.children.length > 0;
+  const isExpanded = state.expandedTreeIds.has(node.id);
+  const isSelected = node.id === state.selectedId;
+  const operation = getLinkOperation(parentNode, node);
 
-  ui.svg.attr("width", svgWidth).attr("height", Math.max(svgHeight, 420));
-
-  const canvas = ui.svg
-    .selectAll("g.canvas")
-    .data([null])
-    .join("g")
-    .attr("class", "canvas")
-    .attr("transform", `translate(${margin.left}, ${margin.top - minX})`);
-
-  const linkLayer = canvas.selectAll("g.links").data([null]).join("g").attr("class", "links");
-  const nodeLayer = canvas.selectAll("g.nodes").data([null]).join("g").attr("class", "nodes");
-  const linkPathLayer = linkLayer.selectAll("g.link-paths").data([null]).join("g").attr("class", "link-paths");
-  const linkLabelLayer = linkLayer.selectAll("g.link-labels").data([null]).join("g").attr("class", "link-labels");
-
-  const link = linkPathLayer.selectAll("path.tree-link").data(visibleLinks, (linkDatum) => linkDatum.target.data.id);
-
-  const linkEnter = link
-    .enter()
-    .append("path")
-    .attr("class", "tree-link")
-    .attr("d", () => drawLink({ source: origin, target: origin }));
-
-  link
-    .merge(linkEnter)
-    .transition()
-    .duration(260)
-    .attr("d", (linkDatum) => drawLink(linkDatum));
-
-  link
-    .exit()
-    .transition()
-    .duration(220)
-    .attr("d", () => drawLink({ source: origin, target: origin }))
-    .remove();
-
-  const linkLabel = linkLabelLayer
-    .selectAll("g.link-label")
-    .data(visibleLinks, (linkDatum) => linkDatum.target.data.id);
-
-  const linkLabelEnter = linkLabel
-    .enter()
-    .append("g")
-    .attr("class", "link-label")
-    .attr("transform", () => formatLinkLabelTransform({ source: origin, target: origin }))
-    .style("opacity", 0);
-
-  linkLabelEnter.append("rect").attr("class", "link-label-pill");
-  linkLabelEnter
-    .append("text")
-    .attr("class", "link-label-text")
-    .attr("text-anchor", "middle")
-    .attr("dominant-baseline", "middle");
-
-  const mergedLinkLabel = linkLabel.merge(linkLabelEnter);
-
-  mergedLinkLabel
-    .each(function (linkDatum) {
-      const group = d3.select(this);
-      const text = group.select("text.link-label-text");
-
-      text.text(getLinkOperation(linkDatum.source.data, linkDatum.target.data));
-
-      const bounds = text.node().getBBox();
-      group
-        .select("rect.link-label-pill")
-        .attr("x", bounds.x - 8)
-        .attr("y", bounds.y - 4)
-        .attr("width", bounds.width + 16)
-        .attr("height", bounds.height + 8)
-        .attr("rx", 999)
-        .attr("ry", 999);
-    })
-    .transition()
-    .duration(260)
-    .style("opacity", 1)
-    .attr("transform", (linkDatum) => formatLinkLabelTransform(linkDatum));
-
-  linkLabel
-    .exit()
-    .transition()
-    .duration(220)
-    .style("opacity", 0)
-    .attr("transform", () => formatLinkLabelTransform({ source: origin, target: origin }))
-    .remove();
-
-  const node = nodeLayer.selectAll("g.node").data(visibleNodes, (nodeDatum) => nodeDatum.data.id);
-
-  const nodeEnter = node
-    .enter()
-    .append("g")
-    .attr("class", "node")
-    .attr("transform", `translate(${origin.y}, ${origin.x})`)
-    .attr("tabindex", 0)
-    .on("click", handleNodeSelection)
-    .on("keydown", (event, nodeDatum) => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        handleNodeSelection(event, nodeDatum);
+  return `
+    <li class="tree-node${isSelected ? " is-selected" : ""}" style="--tree-depth: ${depth}">
+      <div class="tree-node-row">
+        ${
+          hasChildren
+            ? `<button
+                class="tree-node-toggle${isExpanded ? " is-expanded" : ""}"
+                type="button"
+                data-toggle-id="${escapeHtml(node.id)}"
+                aria-expanded="${isExpanded ? "true" : "false"}"
+                aria-label="${isExpanded ? "Collapse" : "Expand"} ${escapeHtml(node.lemma)}"
+              >
+                <span aria-hidden="true">▸</span>
+              </button>`
+            : '<span class="tree-node-spacer" aria-hidden="true"></span>'
+        }
+        <button class="tree-node-select" type="button" data-select-id="${escapeHtml(node.id)}">
+          <span class="tree-node-label">${formatTreeWord(node)}</span>
+          <span class="tree-node-operation">${escapeHtml(operation)}</span>
+        </button>
+      </div>
+      ${
+        hasChildren
+          ? `<div class="tree-children"${isExpanded ? "" : " hidden"}>
+              <ul class="tree-level">${renderTreeLevel(node.children, node, depth + 1)}</ul>
+            </div>`
+          : ""
       }
-    })
-    .on("mouseenter", showTooltip)
-    .on("mousemove", moveTooltip)
-    .on("mouseleave", hideTooltip);
-
-  nodeEnter.append("path").attr("class", "node-symbol");
-  nodeEnter.append("text").attr("class", "node-label").attr("x", 17).attr("y", 0);
-
-  const mergedNode = node.merge(nodeEnter);
-
-  mergedNode
-    .transition()
-    .duration(260)
-    .attr("transform", (nodeDatum) => `translate(${nodeDatum.y}, ${nodeDatum.x})`);
-
-  mergedNode
-    .classed("selected", (nodeDatum) => nodeDatum.data.id === state.selectedId)
-    .classed("collapsed", (nodeDatum) => Boolean(nodeDatum._children && !nodeDatum.children));
-
-  mergedNode
-    .select("path.node-symbol")
-    .attr("d", (nodeDatum) => getNodeSymbol(nodeDatum.data)())
-    .attr("fill", (nodeDatum) => getAspectFill(nodeDatum.data))
-    .attr("stroke", (nodeDatum) => getRegisterMeta(nodeDatum.data.register).color);
-
-  mergedNode
-    .select("text.node-label")
-    .text((nodeDatum) => nodeDatum.data.lemma);
-
-  node
-    .exit()
-    .transition()
-    .duration(220)
-    .attr("transform", `translate(${origin.y}, ${origin.x})`)
-    .remove();
-
-  visibleNodes.forEach((nodeDatum) => {
-    nodeDatum.x0 = nodeDatum.x;
-    nodeDatum.y0 = nodeDatum.y;
-  });
+    </li>
+  `;
 }
 
-function handleNodeSelection(event, nodeDatum) {
-  state.selectedId = nodeDatum.data.id;
-  renderSelectedNode(nodeDatum);
-
-  if (nodeDatum._children) {
-    nodeDatum.children = nodeDatum.children ? null : nodeDatum._children;
-  }
-
-  updateTree(nodeDatum);
-}
-
-function renderLegend() {
-  const aspectItems = ["imperfective", "perfective"]
-    .map((aspect) => {
-      const meta = getAspectMeta(aspect);
-      return legendItemHtml(`<span class="legend-swatch ${getAspectSwatchClass(meta.fillState)}"></span>${meta.label}`);
-    })
-    .join("");
-
-  const reflexiveItems = [
-    legendItemHtml('<span class="legend-swatch shape-circle stroke-only"></span>Non-reflexive'),
-    legendItemHtml('<span class="legend-swatch shape-diamond stroke-only"></span>Reflexive')
-  ].join("");
-
-  const registerItems = ["vulgar", "very vulgar"]
-    .map((register) => {
-      const meta = getRegisterMeta(register);
-      return legendItemHtml(`<span class="legend-swatch stroke-only" style="--swatch: ${meta.color}"></span>${meta.label}`);
-    })
-    .join("");
-
-  ui.legend.innerHTML = [
-    `<div class="legend-block"><span class="legend-title">Fill</span><div class="legend-items">${aspectItems}</div></div>`,
-    `<div class="legend-block"><span class="legend-title">Shape</span><div class="legend-items">${reflexiveItems}</div></div>`,
-    `<div class="legend-block"><span class="legend-title">Colour</span><div class="legend-items">${registerItems}</div></div>`
-  ].join("");
-}
-
-function renderSelectedNode(nodeDatum) {
-  if (!nodeDatum) {
+function toggleTreeView() {
+  if (state.treeOpen) {
+    closeTreeView();
     return;
   }
 
-  const data = nodeDatum.data;
+  openTreeView();
+}
+
+function openTreeView() {
+  state.treeOpen = true;
+  expandPathTo(state.selectedId);
+  renderNavigator();
+}
+
+function closeTreeView() {
+  if (!state.treeOpen) {
+    return;
+  }
+
+  state.treeOpen = false;
+  renderNavigator();
+}
+
+function toggleTreeNode(nodeId) {
+  if (!nodeId) {
+    return;
+  }
+
+  if (state.expandedTreeIds.has(nodeId)) {
+    state.expandedTreeIds.delete(nodeId);
+  } else {
+    state.expandedTreeIds.add(nodeId);
+  }
+
+  renderNavigator();
+}
+
+function expandPathTo(nodeId) {
+  let cursor = nodeId;
+
+  while (cursor) {
+    const parentId = state.parentIndex.get(cursor);
+
+    if (!parentId) {
+      break;
+    }
+
+    if (parentId !== state.root.id) {
+      state.expandedTreeIds.add(parentId);
+    }
+
+    cursor = parentId;
+  }
+}
+
+function selectBranch(branchId, options = {}) {
+  const target = state.index.get(branchId);
+
+  if (!target) {
+    return;
+  }
+
+  state.selectedId = branchId;
+  expandPathTo(branchId);
+  if (options.closeTree !== false) {
+    state.treeOpen = false;
+  }
+  hidePrefixPopover();
+  renderApp();
+
+  if (!options.preserveScroll) {
+    ui.detailsHeader.scrollIntoView({ block: "start", behavior: "smooth" });
+  }
+}
+
+function renderSelectedNode(data) {
+  if (!data) {
+    return;
+  }
+
   const aspectMeta = getAspectMeta(data.aspect);
   const registerMeta = getRegisterMeta(data.register);
   const partnerLemma = data.partnerId && state.index.has(data.partnerId) ? state.index.get(data.partnerId).lemma : null;
   const childList = Array.isArray(data.children) ? data.children : [];
 
   hidePrefixPopover();
-  ui.detailsTitle.innerHTML = formatDetailsTitle(data.lemma, data.prefix);
-  ui.detailsSubtitle.textContent = `${aspectMeta.label} • ${data.reflexive ? "Reflexive" : "Non-reflexive"} • ${registerMeta.label}`;
+  ui.detailsSubtitle.innerHTML = `${formatDetailsTitle(data.lemma, data.prefix)}<span class="details-subtitle-meta"> · ${escapeHtml(
+    aspectMeta.label
+  )} • ${data.reflexive ? "Reflexive" : "Non-reflexive"} • ${escapeHtml(registerMeta.label)}</span>`;
 
   ui.detailsPanel.innerHTML = `
     <div class="badge-row">
@@ -579,20 +517,19 @@ function renderSelectedNode(nodeDatum) {
     </div>
 
     <section class="details-section">
-      <h3>Profile</h3>
-      <div class="meta-grid">
-        ${metaCardHtml("Derivation", data.derivation || "—")}
-        ${metaCardHtml("Aspect partner", partnerLemma || "—", !partnerLemma)}
-      </div>
-    </section>
-
-    <section class="details-section">
-      <h3>Glosses</h3>
       ${
         data.glosses.length
           ? `<ul class="gloss-list">${data.glosses.map((gloss) => `<li>${escapeHtml(gloss)}</li>`).join("")}</ul>`
           : '<p class="empty-state">No glosses added yet.</p>'
       }
+    </section>
+
+    <section class="details-section">
+      <h3>Profile</h3>
+      <div class="meta-grid">
+        ${metaCardHtml("Derivation", data.derivation || "—")}
+        ${metaCardHtml("Aspect partner", partnerLemma || "—", !partnerLemma)}
+      </div>
     </section>
 
     <section class="details-section">
@@ -624,7 +561,7 @@ function renderSelectedNode(nodeDatum) {
       <h3>Derived Children</h3>
       ${
         childList.length
-          ? `<ul class="branch-list">${childList
+          ? `<ul class="branch-children-list">${childList
               .map((child) => `<li><strong>${escapeHtml(child.lemma)}</strong><br>${escapeHtml(child.shortGloss)}</li>`)
               .join("")}</ul>`
           : '<p class="empty-state">—</p>'
@@ -643,46 +580,26 @@ function renderExampleCard(example) {
   `;
 }
 
-function showTooltip(event, nodeDatum) {
-  ui.tooltip.html(
-    `<strong>${escapeHtml(nodeDatum.data.lemma)}</strong><span>${escapeHtml(nodeDatum.data.shortGloss)}</span>`
-  );
-  ui.tooltip.attr("hidden", null);
-  moveTooltip(event);
-}
-
-function moveTooltip(event) {
-  const bounds = ui.stage.getBoundingClientRect();
-  const tooltipNode = ui.tooltip.node();
-  const tooltipWidth = tooltipNode ? tooltipNode.offsetWidth : 0;
-  const tooltipHeight = tooltipNode ? tooltipNode.offsetHeight : 0;
-  let left = event.clientX - bounds.left + ui.stage.scrollLeft + 18;
-  let top = event.clientY - bounds.top + ui.stage.scrollTop + 18;
-
-  if (left + tooltipWidth > ui.stage.scrollLeft + ui.stage.clientWidth - 12) {
-    left -= tooltipWidth + 30;
-  }
-
-  if (top + tooltipHeight > ui.stage.scrollTop + ui.stage.clientHeight - 12) {
-    top -= tooltipHeight + 30;
-  }
-
-  ui.tooltip.style("left", `${Math.max(12, left)}px`).style("top", `${Math.max(12, top)}px`);
-}
-
-function hideTooltip() {
-  ui.tooltip.attr("hidden", true);
-}
-
 function renderLoadError(error) {
-  hidePrefixPopover();
-  ui.detailsTitle.textContent = "Could not load the explorer";
-  ui.detailsSubtitle.textContent = "Run the project from a local server so the browser can fetch the JSON file.";
+  state.treeOpen = false;
+  ui.branchTitle.textContent = "Could not load the explorer";
+  ui.treeOverlayTitle.textContent = "Load error";
+  ui.treePath.textContent = "Run the project from a local server so the browser can fetch the JSON file.";
+  ui.treeToggle.setAttribute("aria-expanded", "false");
+  ui.treeOverlay.hidden = false;
+  ui.treeOverlayBackdrop.hidden = true;
+  document.body.classList.remove("tree-view-open");
+  ui.branchList.innerHTML = `
+    <div class="branch-empty">
+      <span class="branch-empty-mark">!</span>
+      <p>${escapeHtml(error.message)}</p>
+    </div>
+  `;
+  ui.detailsSubtitle.textContent = "JSON could not be fetched.";
   ui.detailsPanel.innerHTML = `
     <section class="details-section">
-      <h3>Error</h3>
-      <p class="empty-state">${escapeHtml(error.message)}</p>
-      <p class="empty-state">Suggested command: <code>python3 -m http.server 8000</code></p>
+      <h3>Suggested command</h3>
+      <p class="empty-state"><code>python3 -m http.server 8000</code></p>
     </section>
   `;
 }
@@ -708,12 +625,43 @@ function formatDetailsTitle(lemma, prefix) {
     return `<span class="details-title-prefix">${prefixText}</span>${suffixText}`;
   }
 
-  return `<span
+  return `<button
     class="details-title-prefix is-interactive"
-    tabindex="0"
+    type="button"
     data-prefix-key="${escapeHtml(prefixGuide.key)}"
     data-prefix-token="${escapeHtml(prefixGuide.label)}"
-  >${prefixText}</span>${suffixText}`;
+    aria-label="Show prefix note for ${escapeHtml(prefixGuide.label)}"
+  >${prefixText}</button>${suffixText}`;
+}
+
+function formatBranchTitle(lemma, prefix) {
+  const safeLemma = escapeHtml(lemma);
+
+  if (!prefix) {
+    return safeLemma;
+  }
+
+  const barePrefix = String(prefix).replace(/-$/, "");
+
+  if (!barePrefix || !lemma.startsWith(barePrefix)) {
+    return safeLemma;
+  }
+
+  const prefixGuide = getPrefixGuide(prefix);
+  const prefixText = escapeHtml(lemma.slice(0, barePrefix.length));
+  const suffixText = escapeHtml(lemma.slice(barePrefix.length));
+
+  if (!prefixGuide) {
+    return `<span class="branch-title-prefix">${prefixText}</span>${suffixText}`;
+  }
+
+  return `<button
+    class="branch-title-prefix is-interactive"
+    type="button"
+    data-prefix-key="${escapeHtml(prefixGuide.key)}"
+    data-prefix-token="${escapeHtml(prefixGuide.label)}"
+    aria-label="Show prefix note for ${escapeHtml(prefixGuide.label)}"
+  >${prefixText}</button>${suffixText}`;
 }
 
 function getPrefixGuide(prefix) {
@@ -739,6 +687,21 @@ function normalizePrefixGuideKey(prefix) {
   return prefix;
 }
 
+function togglePrefixPopover(prefixNode) {
+  const prefixKey = prefixNode.dataset.prefixKey;
+
+  if (!prefixKey) {
+    return;
+  }
+
+  if (state.prefixPopoverKey === prefixKey && !ui.prefixPopover.hidden) {
+    hidePrefixPopover();
+    return;
+  }
+
+  showPrefixPopover(prefixNode);
+}
+
 function showPrefixPopover(prefixNode) {
   const prefixKey = prefixNode.dataset.prefixKey;
   const prefixGuide = prefixKey ? PREFIX_GUIDE[prefixKey] : null;
@@ -748,18 +711,20 @@ function showPrefixPopover(prefixNode) {
     return;
   }
 
+  state.prefixPopoverKey = prefixKey;
   ui.prefixPopover.innerHTML = renderPrefixPopover(prefixGuide);
   ui.prefixPopover.hidden = false;
   positionPrefixPopover(prefixNode);
 }
 
 function hidePrefixPopover() {
+  state.prefixPopoverKey = null;
   ui.prefixPopover.hidden = true;
   ui.prefixPopover.innerHTML = "";
 }
 
 function positionPrefixPopover(prefixNode) {
-  const headerRect = ui.detailsHeader.getBoundingClientRect();
+  const headerRect = ui.navigatorSurface.getBoundingClientRect();
   const prefixRect = prefixNode.getBoundingClientRect();
   const popoverNode = ui.prefixPopover;
   const verticalOffset = 12;
@@ -803,30 +768,58 @@ function renderPrefixOutcomeTag(outcome) {
   return `<span class="prefix-popover-tag">${escapeHtml(outcome)}</span>`;
 }
 
-function getNodeSymbol(data) {
-  return d3
-    .symbol()
-    .type(data.reflexive ? d3.symbolDiamond : d3.symbolCircle)
-    .size(data.reflexive ? 158 : 136);
+function formatTreeWord(node) {
+  const lemma = String(node.lemma || "");
+  const baseLemma = stripReflexiveMarker(lemma);
+  const reflexiveMarker = lemma.slice(baseLemma.length);
+  const prefixToken = node.prefix ? String(node.prefix).replace(/-$/, "") : "";
+  const parts = [];
+  let cursor = 0;
+
+  if (prefixToken && baseLemma.startsWith(prefixToken)) {
+    parts.push(`<span class="tree-word-prefix">${escapeHtml(baseLemma.slice(0, prefixToken.length))}</span>`);
+    cursor = prefixToken.length;
+  }
+
+  const remaining = baseLemma.slice(cursor);
+  const rootToken = node.root && remaining.startsWith(node.root) ? node.root : "";
+
+  if (rootToken) {
+    parts.push(`<span class="tree-word-root">${escapeHtml(rootToken)}</span>`);
+    cursor += rootToken.length;
+  }
+
+  const suffixToken = baseLemma.slice(cursor);
+
+  if (suffixToken) {
+    parts.push(`<span class="tree-word-suffix">${escapeHtml(suffixToken)}</span>`);
+  }
+
+  if (reflexiveMarker) {
+    parts.push(`<span class="tree-word-suffix tree-word-suffix-reflexive">${escapeHtml(reflexiveMarker)}</span>`);
+  }
+
+  return parts.length ? parts.join("") : escapeHtml(lemma);
+}
+
+function getPath(nodeId) {
+  const path = [];
+  let cursor = nodeId;
+
+  while (cursor) {
+    const node = state.index.get(cursor);
+    if (!node) {
+      break;
+    }
+    path.unshift(node);
+    cursor = state.parentIndex.get(cursor) || null;
+  }
+
+  return path;
 }
 
 function getAspectMeta(aspect) {
   return ASPECT_META[aspect] || ASPECT_META.unspecified;
-}
-
-function getAspectFill(data) {
-  const aspectMeta = getAspectMeta(data.aspect);
-  const registerMeta = getRegisterMeta(data.register);
-
-  if (aspectMeta.fillState === "solid") {
-    return registerMeta.color;
-  }
-
-  if (aspectMeta.fillState === "soft") {
-    return "color-mix(in srgb, var(--surface-strong) 42%, transparent)";
-  }
-
-  return "transparent";
 }
 
 function getRegisterMeta(register) {
@@ -841,32 +834,9 @@ function normalizeRegister(register) {
   return register && REGISTER_META[register] ? register : "unspecified";
 }
 
-function findVisibleNodeById(id) {
-  return state.root ? state.root.descendants().find((node) => node.data.id === id) || null : null;
-}
-
 function walkDataTree(node, callback) {
   callback(node);
   (node.children || []).forEach((child) => walkDataTree(child, callback));
-}
-
-function walkHierarchy(node, callback) {
-  callback(node);
-  (node._children || node.children || []).forEach((child) => walkHierarchy(child, callback));
-}
-
-function drawLink(linkDatum) {
-  const midpoint = (linkDatum.source.y + linkDatum.target.y) / 2;
-  return `M${linkDatum.source.y},${linkDatum.source.x}
-    C${midpoint},${linkDatum.source.x}
-    ${midpoint},${linkDatum.target.x}
-    ${linkDatum.target.y},${linkDatum.target.x}`;
-}
-
-function formatLinkLabelTransform(linkDatum) {
-  const x = linkDatum.source.y + (linkDatum.target.y - linkDatum.source.y) * 0.56;
-  const y = linkDatum.source.x + (linkDatum.target.x - linkDatum.source.x) * 0.5 - 12;
-  return `translate(${x}, ${y})`;
 }
 
 function getLinkOperation(parentData, childData) {
@@ -985,14 +955,6 @@ function metaCardHtml(label, value, dimmed = false) {
 
 function conjugationCardHtml(label, value) {
   return `<div class="conjugation-card"><span>${escapeHtml(prettyLabel(label))}</span>${escapeHtml(value)}</div>`;
-}
-
-function legendItemHtml(content) {
-  return `<span class="legend-item">${content}</span>`;
-}
-
-function getAspectSwatchClass(fillState) {
-  return `fill-${fillState}`;
 }
 
 function prettyLabel(label) {
