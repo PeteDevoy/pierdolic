@@ -11,12 +11,10 @@ const DATA_URL = "data/verb-data.json";
 const ASPECT_META = {
   imperfective: { label: "Imperfective", color: "var(--aspect-imperfective)" },
   perfective: { label: "Perfective", color: "var(--aspect-perfective)" },
-  biaspectual: { label: "Biaspectual", color: "var(--aspect-biaspectual)" },
   unspecified: { label: "Unspecified", color: "var(--aspect-unknown)" }
 };
 
 const REGISTER_META = {
-  colloquial: { label: "Colloquial", color: "var(--register-colloquial)" },
   vulgar: { label: "Vulgar", color: "var(--register-vulgar)" },
   "very vulgar": { label: "Very vulgar", color: "var(--register-very-vulgar)" },
   unspecified: { label: "Unspecified", color: "var(--register-unspecified)" }
@@ -344,7 +342,7 @@ function handleNodeSelection(event, nodeDatum) {
 }
 
 function renderLegend() {
-  const aspectItems = ["imperfective", "perfective", "biaspectual"]
+  const aspectItems = ["imperfective", "perfective"]
     .map((aspect) => {
       const meta = getAspectMeta(aspect);
       return legendItemHtml(`<span class="legend-swatch" style="--swatch: ${meta.color}"></span>${meta.label}`);
@@ -356,7 +354,7 @@ function renderLegend() {
     legendItemHtml('<span class="legend-swatch shape-diamond stroke-only"></span>Reflexive')
   ].join("");
 
-  const registerItems = ["colloquial", "vulgar", "very vulgar"]
+  const registerItems = ["vulgar", "very vulgar"]
     .map((register) => {
       const meta = getRegisterMeta(register);
       return legendItemHtml(`<span class="legend-swatch stroke-only" style="--swatch: ${meta.color}"></span>${meta.label}`);
@@ -364,9 +362,9 @@ function renderLegend() {
     .join("");
 
   ui.legend.innerHTML = [
-    `<div class="legend-block"><span class="legend-title">Aspect</span>${aspectItems}</div>`,
-    `<div class="legend-block"><span class="legend-title">Shape</span>${reflexiveItems}</div>`,
-    `<div class="legend-block"><span class="legend-title">Stroke</span>${registerItems}</div>`
+    `<div class="legend-block"><span class="legend-title">Fill</span><div class="legend-items">${aspectItems}</div></div>`,
+    `<div class="legend-block"><span class="legend-title">Shape</span><div class="legend-items">${reflexiveItems}</div></div>`,
+    `<div class="legend-block"><span class="legend-title">Stroke</span><div class="legend-items">${registerItems}</div></div>`
   ].join("");
 }
 
@@ -379,14 +377,9 @@ function renderSelectedNode(nodeDatum) {
   const aspectMeta = getAspectMeta(data.aspect);
   const registerMeta = getRegisterMeta(data.register);
   const partnerLemma = data.partnerId && state.index.has(data.partnerId) ? state.index.get(data.partnerId).lemma : null;
-  const path = nodeDatum
-    .ancestors()
-    .reverse()
-    .map((ancestor) => ancestor.data.lemma)
-    .join(" → ");
   const childList = Array.isArray(data.children) ? data.children : [];
 
-  ui.detailsTitle.textContent = data.lemma;
+  ui.detailsTitle.innerHTML = formatDetailsTitle(data.lemma, data.prefix);
   ui.detailsSubtitle.textContent = `${aspectMeta.label} • ${data.reflexive ? "Reflexive" : "Non-reflexive"} • ${registerMeta.label}`;
 
   ui.detailsPanel.innerHTML = `
@@ -399,12 +392,8 @@ function renderSelectedNode(nodeDatum) {
     <section class="details-section">
       <h3>Profile</h3>
       <div class="meta-grid">
-        ${metaCardHtml("ID", data.id)}
-        ${metaCardHtml("Root", data.root || "—")}
-        ${metaCardHtml("Prefix", data.prefix || "—")}
         ${metaCardHtml("Derivation", data.derivation || "—")}
-        ${metaCardHtml("Aspect partner", partnerLemma || "—")}
-        ${metaCardHtml("Tree path", path)}
+        ${metaCardHtml("Aspect partner", partnerLemma || "—", !partnerLemma)}
       </div>
     </section>
 
@@ -506,6 +495,24 @@ function renderLoadError(error) {
       <p class="empty-state">Suggested command: <code>python3 -m http.server 8000</code></p>
     </section>
   `;
+}
+
+function formatDetailsTitle(lemma, prefix) {
+  const safeLemma = escapeHtml(lemma);
+
+  if (!prefix) {
+    return safeLemma;
+  }
+
+  const barePrefix = String(prefix).replace(/-$/, "");
+
+  if (!barePrefix || !lemma.startsWith(barePrefix)) {
+    return safeLemma;
+  }
+
+  return `<span class="details-title-prefix">${escapeHtml(lemma.slice(0, barePrefix.length))}</span>${escapeHtml(
+    lemma.slice(barePrefix.length)
+  )}`;
 }
 
 function getNodeSymbol(data) {
@@ -664,8 +671,8 @@ function badgeHtml(typeClass, label, color) {
   return `<span class="badge ${typeClass}"${style}>${escapeHtml(label)}</span>`;
 }
 
-function metaCardHtml(label, value) {
-  return `<div class="meta-card"><span>${escapeHtml(label)}</span>${escapeHtml(value)}</div>`;
+function metaCardHtml(label, value, dimmed = false) {
+  return `<div class="meta-card${dimmed ? " is-dimmed" : ""}"><span>${escapeHtml(label)}</span>${escapeHtml(value)}</div>`;
 }
 
 function conjugationCardHtml(label, value) {
