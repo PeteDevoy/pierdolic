@@ -9,15 +9,150 @@ const DATA_URL = "data/verb-data.json";
 */
 
 const ASPECT_META = {
-  imperfective: { label: "Imperfective", color: "var(--aspect-imperfective)" },
-  perfective: { label: "Perfective", color: "var(--aspect-perfective)" },
-  unspecified: { label: "Unspecified", color: "var(--aspect-unknown)" }
+  imperfective: { label: "Imperfective", fillState: "hollow" },
+  perfective: { label: "Perfective", fillState: "solid" },
+  unspecified: { label: "Unspecified", fillState: "soft" }
 };
 
 const REGISTER_META = {
   vulgar: { label: "Vulgar", color: "var(--register-vulgar)" },
   "very vulgar": { label: "Very vulgar", color: "var(--register-very-vulgar)" },
   unspecified: { label: "Unspecified", color: "var(--register-unspecified)" }
+};
+
+/*
+  Prefix notes are kept separate from the verb-family data so the same
+  linguistic guide can be reused across different families in the future.
+*/
+const PREFIX_GUIDE = {
+  "do-": {
+    label: "do-",
+    coreIdea: "reaching a limit / endpoint",
+    pfvEffect: "completion up to a boundary",
+    outcomes: ["finish", "add to completion"],
+    exampleLemma: "dopisać",
+    exampleGloss: "finish writing / add"
+  },
+  "na-": {
+    label: "na-",
+    coreIdea: "accumulation / surface coverage",
+    pfvEffect: "reaching a sufficient or excessive amount",
+    outcomes: ["pile up", "do a lot", "saturate"],
+    exampleLemma: "napisać",
+    exampleGloss: "write to completion"
+  },
+  "po-": {
+    label: "po-",
+    coreIdea: "distributed / bounded small quantity",
+    pfvEffect: "delimited action for a bit or in small amounts",
+    outcomes: ["do briefly", "do here and there"],
+    exampleLemma: "popisać",
+    exampleGloss: "write a bit"
+  },
+  "prze-": {
+    label: "prze-",
+    coreIdea: "through / across / excess",
+    pfvEffect: "crossing a threshold",
+    outcomes: ["overdo", "redo", "transfer"],
+    exampleLemma: "przepisać",
+    exampleGloss: "copy / rewrite"
+  },
+  "przy-": {
+    label: "przy-",
+    coreIdea: "toward / attachment",
+    pfvEffect: "contact or slight addition",
+    outcomes: ["attach", "approach", "do slightly"],
+    exampleLemma: "przykręcić",
+    exampleGloss: "fasten / tighten"
+  },
+  "roz-": {
+    label: "roz-",
+    coreIdea: "apart / dispersal",
+    pfvEffect: "result = separation",
+    outcomes: ["split", "scatter", "intensify to destruction"],
+    exampleLemma: "rozbić",
+    exampleGloss: "smash apart"
+  },
+  "s-/z-": {
+    label: "s- / z-",
+    coreIdea: "downward / together / completion",
+    pfvEffect: "resultative completion",
+    outcomes: ["remove", "finish", "bring down"],
+    exampleLemma: "zrobić",
+    exampleGloss: "do / make (complete)"
+  },
+  "u-": {
+    label: "u-",
+    coreIdea: "away / removal / downward",
+    pfvEffect: "reduction or detachment",
+    outcomes: ["cut off", "diminish", "manage to"],
+    exampleLemma: "uciąć",
+    exampleGloss: "cut off"
+  },
+  "w-": {
+    label: "w-",
+    coreIdea: "inward / into",
+    pfvEffect: "entering a bounded space",
+    outcomes: ["insert", "get into", "embed"],
+    exampleLemma: "włożyć",
+    exampleGloss: "put in"
+  },
+  "wy-": {
+    label: "wy-",
+    coreIdea: "outward / out of",
+    pfvEffect: "exit from a space / full extraction",
+    outcomes: ["remove", "extract", "do exhaustively"],
+    exampleLemma: "wyjąć",
+    exampleGloss: "take out"
+  },
+  "za-": {
+    label: "za-",
+    coreIdea: "behind / start / covering",
+    pfvEffect: "boundary crossing or onset",
+    outcomes: ["start", "block", "cover", "go too far"],
+    exampleLemma: "zacząć",
+    exampleGloss: "begin"
+  },
+  "od-": {
+    label: "od-",
+    coreIdea: "away / back",
+    pfvEffect: "separation or reversal",
+    outcomes: ["undo", "return", "detach"],
+    exampleLemma: "oddać",
+    exampleGloss: "give back"
+  },
+  "o-": {
+    label: "o-",
+    coreIdea: "around / about / affecting a surface",
+    pfvEffect: "affecting the target fully or peripherally",
+    outcomes: ["cover", "surround", "scold metaphorically"],
+    exampleLemma: "omalować",
+    exampleGloss: "paint around"
+  },
+  "pod-": {
+    label: "pod-",
+    coreIdea: "under / slightly",
+    pfvEffect: "partial or subordinate action",
+    outcomes: ["do slightly", "sneak under"],
+    exampleLemma: "podgrzać",
+    exampleGloss: "warm up a bit"
+  },
+  "nad-": {
+    label: "nad-",
+    coreIdea: "over / above",
+    pfvEffect: "excess or superiority",
+    outcomes: ["overdo", "surpass"],
+    exampleLemma: "nadpisać",
+    exampleGloss: "overwrite"
+  },
+  "ob-": {
+    label: "ob-",
+    coreIdea: "around / encircling",
+    pfvEffect: "action around an object",
+    outcomes: ["surround", "cover fully"],
+    exampleLemma: "objechać",
+    exampleGloss: "go around"
+  }
 };
 
 const state = {
@@ -32,8 +167,10 @@ const ui = {
   stage: document.getElementById("tree-stage"),
   svg: d3.select("#tree"),
   tooltip: d3.select("#tooltip"),
+  detailsHeader: document.querySelector(".details-header"),
   detailsTitle: document.getElementById("details-title"),
   detailsSubtitle: document.getElementById("details-subtitle"),
+  prefixPopover: document.getElementById("prefix-popover"),
   detailsPanel: document.getElementById("details-panel"),
   expandButton: document.getElementById("expand-all"),
   collapseButton: document.getElementById("collapse-derived")
@@ -52,6 +189,7 @@ async function initialize() {
 
     renderLegend();
     bindControls();
+    bindPrefixPopover();
     installResizeHandling();
     renderSelectedNode(findVisibleNodeById(state.selectedId));
     updateTree(state.root);
@@ -135,6 +273,56 @@ function bindControls() {
   ui.collapseButton.addEventListener("click", () => {
     setExpansionDepth(1);
     updateTree(state.root);
+  });
+}
+
+function bindPrefixPopover() {
+  ui.detailsHeader.addEventListener("pointerover", (event) => {
+    const prefixNode = event.target.closest(".details-title-prefix.is-interactive");
+
+    if (!prefixNode || !ui.detailsHeader.contains(prefixNode)) {
+      return;
+    }
+
+    showPrefixPopover(prefixNode);
+  });
+
+  ui.detailsHeader.addEventListener("pointerout", (event) => {
+    const prefixNode = event.target.closest(".details-title-prefix.is-interactive");
+
+    if (!prefixNode || !ui.detailsHeader.contains(prefixNode)) {
+      return;
+    }
+
+    if (event.relatedTarget && prefixNode.contains(event.relatedTarget)) {
+      return;
+    }
+
+    hidePrefixPopover();
+  });
+
+  ui.detailsHeader.addEventListener("focusin", (event) => {
+    const prefixNode = event.target.closest(".details-title-prefix.is-interactive");
+
+    if (!prefixNode || !ui.detailsHeader.contains(prefixNode)) {
+      return;
+    }
+
+    showPrefixPopover(prefixNode);
+  });
+
+  ui.detailsHeader.addEventListener("focusout", (event) => {
+    const prefixNode = event.target.closest(".details-title-prefix.is-interactive");
+
+    if (!prefixNode || !ui.detailsHeader.contains(prefixNode)) {
+      return;
+    }
+
+    if (event.relatedTarget && prefixNode.contains(event.relatedTarget)) {
+      return;
+    }
+
+    hidePrefixPopover();
   });
 }
 
@@ -310,7 +498,7 @@ function updateTree(sourceNode) {
   mergedNode
     .select("path.node-symbol")
     .attr("d", (nodeDatum) => getNodeSymbol(nodeDatum.data)())
-    .attr("fill", (nodeDatum) => getAspectMeta(nodeDatum.data.aspect).color)
+    .attr("fill", (nodeDatum) => getAspectFill(nodeDatum.data))
     .attr("stroke", (nodeDatum) => getRegisterMeta(nodeDatum.data.register).color);
 
   mergedNode
@@ -345,7 +533,7 @@ function renderLegend() {
   const aspectItems = ["imperfective", "perfective"]
     .map((aspect) => {
       const meta = getAspectMeta(aspect);
-      return legendItemHtml(`<span class="legend-swatch" style="--swatch: ${meta.color}"></span>${meta.label}`);
+      return legendItemHtml(`<span class="legend-swatch ${getAspectSwatchClass(meta.fillState)}"></span>${meta.label}`);
     })
     .join("");
 
@@ -364,7 +552,7 @@ function renderLegend() {
   ui.legend.innerHTML = [
     `<div class="legend-block"><span class="legend-title">Fill</span><div class="legend-items">${aspectItems}</div></div>`,
     `<div class="legend-block"><span class="legend-title">Shape</span><div class="legend-items">${reflexiveItems}</div></div>`,
-    `<div class="legend-block"><span class="legend-title">Stroke</span><div class="legend-items">${registerItems}</div></div>`
+    `<div class="legend-block"><span class="legend-title">Colour</span><div class="legend-items">${registerItems}</div></div>`
   ].join("");
 }
 
@@ -379,12 +567,13 @@ function renderSelectedNode(nodeDatum) {
   const partnerLemma = data.partnerId && state.index.has(data.partnerId) ? state.index.get(data.partnerId).lemma : null;
   const childList = Array.isArray(data.children) ? data.children : [];
 
+  hidePrefixPopover();
   ui.detailsTitle.innerHTML = formatDetailsTitle(data.lemma, data.prefix);
   ui.detailsSubtitle.textContent = `${aspectMeta.label} • ${data.reflexive ? "Reflexive" : "Non-reflexive"} • ${registerMeta.label}`;
 
   ui.detailsPanel.innerHTML = `
     <div class="badge-row">
-      ${badgeHtml("aspect", aspectMeta.label, aspectMeta.color)}
+      ${aspectBadgeHtml(aspectMeta)}
       ${badgeHtml("", data.reflexive ? "Reflexive" : "Non-reflexive")}
       ${badgeHtml("register", registerMeta.label, registerMeta.color)}
     </div>
@@ -431,14 +620,14 @@ function renderSelectedNode(nodeDatum) {
       }
     </section>
 
-    <section class="details-section">
+    <section class="details-section${childList.length ? "" : " empty-section"}">
       <h3>Derived Children</h3>
       ${
         childList.length
           ? `<ul class="branch-list">${childList
               .map((child) => `<li><strong>${escapeHtml(child.lemma)}</strong><br>${escapeHtml(child.shortGloss)}</li>`)
               .join("")}</ul>`
-          : '<p class="empty-state">Leaf node: no child forms in this sample.</p>'
+          : '<p class="empty-state">—</p>'
       }
     </section>
   `;
@@ -486,6 +675,7 @@ function hideTooltip() {
 }
 
 function renderLoadError(error) {
+  hidePrefixPopover();
   ui.detailsTitle.textContent = "Could not load the explorer";
   ui.detailsSubtitle.textContent = "Run the project from a local server so the browser can fetch the JSON file.";
   ui.detailsPanel.innerHTML = `
@@ -510,9 +700,107 @@ function formatDetailsTitle(lemma, prefix) {
     return safeLemma;
   }
 
-  return `<span class="details-title-prefix">${escapeHtml(lemma.slice(0, barePrefix.length))}</span>${escapeHtml(
-    lemma.slice(barePrefix.length)
-  )}`;
+  const prefixGuide = getPrefixGuide(prefix);
+  const prefixText = escapeHtml(lemma.slice(0, barePrefix.length));
+  const suffixText = escapeHtml(lemma.slice(barePrefix.length));
+
+  if (!prefixGuide) {
+    return `<span class="details-title-prefix">${prefixText}</span>${suffixText}`;
+  }
+
+  return `<span
+    class="details-title-prefix is-interactive"
+    tabindex="0"
+    data-prefix-key="${escapeHtml(prefixGuide.key)}"
+    data-prefix-token="${escapeHtml(prefixGuide.label)}"
+  >${prefixText}</span>${suffixText}`;
+}
+
+function getPrefixGuide(prefix) {
+  const key = normalizePrefixGuideKey(prefix);
+  const guide = PREFIX_GUIDE[key];
+
+  if (!guide) {
+    return null;
+  }
+
+  return { key, ...guide };
+}
+
+function normalizePrefixGuideKey(prefix) {
+  if (!prefix) {
+    return "";
+  }
+
+  if (prefix === "s-" || prefix === "z-") {
+    return "s-/z-";
+  }
+
+  return prefix;
+}
+
+function showPrefixPopover(prefixNode) {
+  const prefixKey = prefixNode.dataset.prefixKey;
+  const prefixGuide = prefixKey ? PREFIX_GUIDE[prefixKey] : null;
+
+  if (!prefixGuide) {
+    hidePrefixPopover();
+    return;
+  }
+
+  ui.prefixPopover.innerHTML = renderPrefixPopover(prefixGuide);
+  ui.prefixPopover.hidden = false;
+  positionPrefixPopover(prefixNode);
+}
+
+function hidePrefixPopover() {
+  ui.prefixPopover.hidden = true;
+  ui.prefixPopover.innerHTML = "";
+}
+
+function positionPrefixPopover(prefixNode) {
+  const headerRect = ui.detailsHeader.getBoundingClientRect();
+  const prefixRect = prefixNode.getBoundingClientRect();
+  const popoverNode = ui.prefixPopover;
+  const verticalOffset = 12;
+
+  popoverNode.style.left = "0px";
+  popoverNode.style.top = `${prefixRect.bottom - headerRect.top + verticalOffset}px`;
+
+  const popoverRect = popoverNode.getBoundingClientRect();
+  const availableWidth = headerRect.width - popoverRect.width;
+  const anchoredLeft = prefixRect.left - headerRect.left;
+  const clampedLeft = clamp(anchoredLeft, 0, Math.max(0, availableWidth));
+
+  popoverNode.style.left = `${clampedLeft}px`;
+}
+
+function renderPrefixPopover(prefixGuide) {
+  return `
+    <div class="prefix-popover-kicker">Prefix lens</div>
+    <div class="prefix-popover-head">
+      <span class="prefix-popover-chip">${escapeHtml(prefixGuide.label)}</span>
+      <p>${escapeHtml(prefixGuide.coreIdea)}</p>
+    </div>
+    <dl class="prefix-popover-grid">
+      <div class="prefix-popover-row">
+        <dt>PFV effect</dt>
+        <dd>${escapeHtml(prefixGuide.pfvEffect)}</dd>
+      </div>
+      <div class="prefix-popover-row">
+        <dt>Common outcomes</dt>
+        <dd class="prefix-popover-tags">${prefixGuide.outcomes.map(renderPrefixOutcomeTag).join("")}</dd>
+      </div>
+      <div class="prefix-popover-row">
+        <dt>Example</dt>
+        <dd><strong>${escapeHtml(prefixGuide.exampleLemma)}</strong> → ${escapeHtml(prefixGuide.exampleGloss)}</dd>
+      </div>
+    </dl>
+  `;
+}
+
+function renderPrefixOutcomeTag(outcome) {
+  return `<span class="prefix-popover-tag">${escapeHtml(outcome)}</span>`;
 }
 
 function getNodeSymbol(data) {
@@ -524,6 +812,21 @@ function getNodeSymbol(data) {
 
 function getAspectMeta(aspect) {
   return ASPECT_META[aspect] || ASPECT_META.unspecified;
+}
+
+function getAspectFill(data) {
+  const aspectMeta = getAspectMeta(data.aspect);
+  const registerMeta = getRegisterMeta(data.register);
+
+  if (aspectMeta.fillState === "solid") {
+    return registerMeta.color;
+  }
+
+  if (aspectMeta.fillState === "soft") {
+    return "color-mix(in srgb, var(--surface-strong) 42%, transparent)";
+  }
+
+  return "transparent";
 }
 
 function getRegisterMeta(register) {
@@ -671,6 +974,11 @@ function badgeHtml(typeClass, label, color) {
   return `<span class="badge ${typeClass}"${style}>${escapeHtml(label)}</span>`;
 }
 
+function aspectBadgeHtml(aspectMeta) {
+  const variantClass = `aspect-${aspectMeta.fillState}`;
+  return `<span class="badge aspect ${variantClass}">${escapeHtml(aspectMeta.label)}</span>`;
+}
+
 function metaCardHtml(label, value, dimmed = false) {
   return `<div class="meta-card${dimmed ? " is-dimmed" : ""}"><span>${escapeHtml(label)}</span>${escapeHtml(value)}</div>`;
 }
@@ -681,6 +989,10 @@ function conjugationCardHtml(label, value) {
 
 function legendItemHtml(content) {
   return `<span class="legend-item">${content}</span>`;
+}
+
+function getAspectSwatchClass(fillState) {
+  return `fill-${fillState}`;
 }
 
 function prettyLabel(label) {
@@ -709,4 +1021,8 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
 }

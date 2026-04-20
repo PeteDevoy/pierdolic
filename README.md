@@ -1,8 +1,8 @@
-# Polish Verb Family Explorer
+# Pierdolę to...
 
-A small no-build D3.js project for exploring a Polish verb family as a derivational tree with rich lexical metadata.
+A small no-build D3.js microsite about the Polish vulgar verb family around `pierdolić`.
 
-The sample data models the vulgar verb family around `pierdolić`. The tree focuses on derivational relationships, while the side panel carries the denser information: aspect, reflexivity, register, multiple glosses, example sentences, notes, and basic conjugation metadata.
+The tree focuses on derivational relationships inside this one family, while the side panel carries denser lexical information: aspect, reflexivity, register, multiple glosses, example sentences, notes, and basic conjugation metadata.
 
 ## Run locally
 
@@ -24,11 +24,11 @@ Notes:
 - `index.html` - page layout and app shell
 - `styles.css` - responsive layout and visual styling
 - `main.js` - data normalization, tree rendering, tooltip, and details panel logic
-- `data/verb-data.json` - the lexical dataset for one verb family
+- `data/verb-data.json` - the lexical dataset for the `pierdolić` family
 
 ## Data model
 
-The input JSON is a tree rooted in a base verb. Each node can describe a lexical form with derivational children.
+The input JSON is a tree rooted in `pierdolić`. Each node describes a derived lexical form inside that family.
 
 ```json
 {
@@ -58,11 +58,9 @@ The input JSON is a tree rooted in a base verb. Each node can describe a lexical
 }
 ```
 
-The schema is designed so other verb families can reuse the same renderer without code changes.
+## Extending this dataset
 
-## Extending the dataset
-
-To add more forms or another verb family:
+To add more forms from the `pierdolić` family:
 
 1. Start from `data/verb-data.json`.
 2. Keep one lexical node per lemma or lexicalized reflexive form.
@@ -76,7 +74,7 @@ Recommended practices:
 - Keep `id` values stable and unique.
 - Prefer short, readable glosses in `glosses`; the tooltip uses the first one as a short summary.
 - Use `notes` for pragmatics, usage restrictions, or idiomatic caveats.
-- If you add a new register label or aspect value, extend the visual encoding maps in `main.js`.
+- If you add a new register label or aspect value, update the visual encoding maps in `main.js`.
 
 ## Contributing examples
 

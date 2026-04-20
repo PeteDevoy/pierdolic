@@ -15,11 +15,8 @@
   --accent-soft: #d97706;
   --tree-link: rgba(76, 93, 96, 0.42);
   --shadow: 0 18px 44px rgba(59, 49, 33, 0.14);
-  --aspect-imperfective: #1d766e;
-  --aspect-perfective: #c85f32;
-  --aspect-unknown: #708090;
-  --register-vulgar: #a1452d;
-  --register-very-vulgar: #601a12;
+  --register-vulgar: #1d766e;
+  --register-very-vulgar: #c85f32;
   --register-unspecified: #59636a;
   --chip-bg: rgba(20, 95, 88, 0.08);
   --panel-bg: rgba(255, 250, 242, 0.9);
@@ -67,6 +64,8 @@
     --accent: #d7d0c2;
     --accent-soft: #f0a55d;
     --tree-link: rgba(215, 214, 211, 0.26);
+    --register-vulgar: #58b7a8;
+    --register-very-vulgar: #f08a47;
     --shadow: 0 20px 48px rgba(0, 0, 0, 0.32);
     --chip-bg: rgba(255, 255, 255, 0.08);
     --panel-bg: rgba(16, 17, 19, 0.92);
@@ -251,6 +250,7 @@ button {
 }
 
 .details-header {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
@@ -268,6 +268,16 @@ button {
   text-decoration-color: color-mix(in srgb, var(--accent-soft) 82%, white 18%);
   text-decoration-thickness: 0.11em;
   text-underline-offset: 0.12em;
+}
+
+.details-title-prefix.is-interactive {
+  cursor: help;
+}
+
+.details-title-prefix.is-interactive:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent-soft) 70%, white 30%);
+  outline-offset: 4px;
+  border-radius: 0.2rem;
 }
 
 .stage-brand {
@@ -353,7 +363,7 @@ button:focus-visible {
   width: 0.9rem;
   height: 0.9rem;
   border-radius: 999px;
-  border: 2px solid transparent;
+  border: 2px solid var(--text);
   background: var(--swatch, var(--accent));
 }
 
@@ -369,6 +379,21 @@ button:focus-visible {
 .legend-swatch.stroke-only {
   background: transparent;
   border-color: var(--swatch, currentColor);
+}
+
+.legend-swatch.fill-solid {
+  background: var(--text);
+  border-color: var(--text);
+}
+
+.legend-swatch.fill-hollow {
+  background: transparent;
+  border-color: var(--text);
+}
+
+.legend-swatch.fill-soft {
+  background: color-mix(in srgb, var(--text) 35%, transparent);
+  border-color: var(--text);
 }
 
 .tree-stage {
@@ -463,6 +488,94 @@ button:focus-visible {
   font-size: 0.96rem;
 }
 
+.prefix-popover {
+  position: absolute;
+  z-index: 3;
+  width: min(340px, calc(100% - 0.5rem));
+  padding: 0.9rem 1rem;
+  border-radius: 18px;
+  border: 1px solid var(--overlay-border);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-strong) 96%, transparent), color-mix(in srgb, var(--surface) 92%, transparent));
+  box-shadow: var(--overlay-shadow);
+  backdrop-filter: blur(16px);
+  pointer-events: none;
+}
+
+.prefix-popover-kicker {
+  margin-bottom: 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.prefix-popover-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-bottom: 0.8rem;
+}
+
+.prefix-popover-head p {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.45;
+}
+
+.prefix-popover-chip {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent-soft) 18%, transparent);
+  color: var(--accent-soft);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.prefix-popover-grid {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0;
+}
+
+.prefix-popover-row {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.prefix-popover-row dt {
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.prefix-popover-row dd {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.45;
+}
+
+.prefix-popover-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.prefix-popover-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.28rem 0.55rem;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  color: var(--text);
+  font-size: 0.83rem;
+}
+
 .details-surface {
   position: sticky;
   top: 0.85rem;
@@ -532,8 +645,24 @@ button:focus-visible {
 }
 
 .badge.aspect {
-  color: #fff;
-  background: var(--badge-color, var(--accent));
+  color: var(--text);
+}
+
+.badge.aspect.aspect-solid {
+  color: var(--surface-strong);
+  background: var(--text);
+  border-color: color-mix(in srgb, var(--text) 84%, transparent);
+}
+
+.badge.aspect.aspect-hollow {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--text) 28%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 22%, transparent);
+}
+
+.badge.aspect.aspect-soft {
+  background: color-mix(in srgb, var(--text) 14%, transparent);
+  border-color: color-mix(in srgb, var(--text) 24%, transparent);
 }
 
 .badge.register {
@@ -582,6 +711,10 @@ button:focus-visible {
 .empty-state {
   margin: 0;
   color: var(--muted);
+}
+
+.empty-section {
+  opacity: 0.5;
 }
 
 @media (max-width: 1080px) {
