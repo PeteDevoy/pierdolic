@@ -112,6 +112,14 @@
         vector-effect: non-scaling-stroke;
       }
 
+      .word-bbox-gap {
+        fill: none;
+        stroke: #000;
+        stroke-width: 8;
+        stroke-linecap: square;
+        vector-effect: non-scaling-stroke;
+      }
+
       .debug-shape {
         fill: none;
         pointer-events: none;
@@ -213,7 +221,7 @@
           var bottom = halfHeight;
           var isSuffixBadge = orientation === "suffix";
 
-          if (styleVariant === "internal-suffix-substitution") {
+          if (styleVariant === "substitution") {
             return {
               left: left,
               right: right,
@@ -248,6 +256,89 @@
                 bottom +
                 " H " +
                 right,
+              fitRect: {
+                minX: left,
+                maxX: right,
+                minY: top,
+                maxY: bottom
+              },
+              collisionRadius: Math.sqrt(width * width + height * height) / 2
+            };
+          }
+
+          if (styleVariant === "substitution-terminal") {
+            return {
+              left: left,
+              right: right,
+              top: top,
+              bottom: bottom,
+              width: width,
+              height: height,
+              radius: radius,
+              fillPath:
+                "M " +
+                left +
+                " " +
+                top +
+                " H " +
+                (right - radius) +
+                " A " +
+                radius +
+                " " +
+                radius +
+                " 0 0 1 " +
+                right +
+                " " +
+                (top + radius) +
+                " V " +
+                (bottom - radius) +
+                " A " +
+                radius +
+                " " +
+                radius +
+                " 0 0 1 " +
+                (right - radius) +
+                " " +
+                bottom +
+                " H " +
+                left +
+                " Z",
+              solidPath:
+                "M " +
+                (right - radius) +
+                " " +
+                top +
+                " A " +
+                radius +
+                " " +
+                radius +
+                " 0 0 1 " +
+                right +
+                " " +
+                (top + radius) +
+                " V " +
+                (bottom - radius) +
+                " A " +
+                radius +
+                " " +
+                radius +
+                " 0 0 1 " +
+                (right - radius) +
+                " " +
+                bottom,
+              dashedPath:
+                "M " +
+                left +
+                " " +
+                top +
+                " H " +
+                (right - radius) +
+                " M " +
+                left +
+                " " +
+                bottom +
+                " H " +
+                (right - radius),
               fitRect: {
                 minX: left,
                 maxX: right,
@@ -495,6 +586,30 @@
           return normalizePrefix(node && node.prefix);
         }
 
+        function hasSuffixSubstitution(node) {
+          return Boolean(
+            node &&
+              node.suffixSubstitution &&
+              typeof node.suffixSubstitution.to === "string"
+          );
+        }
+
+        function isLeafVerbNode(node) {
+          return !Array.isArray(node && node.children) || node.children.length === 0;
+        }
+
+        function hasTrailingReflexiveToken(node) {
+          return Boolean(node && node.reflexiveTarget);
+        }
+
+        function isSubstitutionBadge(entry) {
+          return (
+            entry &&
+            (entry.badgeStyle === "substitution" ||
+              entry.badgeStyle === "substitution-terminal")
+          );
+        }
+
         function getTransitionDetails(parentNode, childNode) {
           var parentPrefix = getNodePrefix(parentNode);
           var childPrefix = getNodePrefix(childNode);
@@ -503,7 +618,11 @@
           var hasPrefixChange = false;
           var hasSuffixChange = false;
           var hasReflexiveChange = false;
-          var isInternalSuffixSubstitution = false;
+          var isSubstitution = hasSuffixSubstitution(childNode);
+          var isTerminalSubstitution =
+            isSubstitution &&
+            isLeafVerbNode(childNode) &&
+            !hasTrailingReflexiveToken(childNode);
           var label;
 
           if (childPrefix && childPrefix !== parentPrefix) {
@@ -511,11 +630,7 @@
             labelParts.push(childPrefix);
           }
 
-          if (
-            childNode &&
-            childNode.suffixSubstitution &&
-            typeof childNode.suffixSubstitution.to === "string"
-          ) {
+          if (isSubstitution) {
             suffixLabel = formatSuffixLabel(childNode.suffixSubstitution.to);
           } else if (parentNode && childNode && parentNode.suffix !== childNode.suffix) {
             suffixLabel = formatSuffixLabel(childNode && childNode.suffix);
@@ -536,22 +651,14 @@
           }
 
           label = labelParts.join(" ").trim() || getNodeVariant(childNode);
-          isInternalSuffixSubstitution = Boolean(
-            childNode &&
-              childNode.suffixSubstitution &&
-              !hasPrefixChange &&
-              !hasReflexiveChange &&
-              parentNode &&
-              parentNode.reflexiveTarget &&
-              childNode.reflexiveTarget === parentNode.reflexiveTarget
-          );
-
           return {
             label: label,
             badgeOrientation:
               !hasPrefixChange && (hasSuffixChange || hasReflexiveChange) ? "suffix" : "prefix",
-            badgeStyle: isInternalSuffixSubstitution
-              ? "internal-suffix-substitution"
+            badgeStyle: isSubstitution
+              ? isTerminalSubstitution
+                ? "substitution-terminal"
+                : "substitution"
               : "default"
           };
         }
@@ -581,19 +688,17 @@
           var leftAttachment = orbitEntries.some(function (entry) {
             return entry.badgeOrientation === "prefix";
           });
-          var rightAttachment = orbitEntries.some(function (entry) {
-            return entry.badgeOrientation === "suffix";
+          var rightOuterAttachment = orbitEntries.some(function (entry) {
+            return entry.badgeOrientation === "suffix" && !isSubstitutionBadge(entry);
           });
-          var internalRightAttachment = Boolean(
-            orbitEntries.some(function (entry) {
-              return entry.badgeStyle === "internal-suffix-substitution";
-            })
-          );
+          var substitutionAttachment = orbitEntries.some(function (entry) {
+            return isSubstitutionBadge(entry);
+          });
 
           return {
             leftAttachment: leftAttachment,
-            rightAttachment: rightAttachment,
-            internalRightAttachment: internalRightAttachment
+            rightOuterAttachment: rightOuterAttachment,
+            substitutionAttachment: substitutionAttachment
           };
         }
 
@@ -648,8 +753,7 @@
 
         function getCenterWordBorderShapeData(width, height, cornerRadius, borderState) {
           var leftAttachment = borderState.leftAttachment;
-          var rightAttachment = borderState.rightAttachment;
-          var rightOuterAttachment = rightAttachment && !borderState.internalRightAttachment;
+          var rightOuterAttachment = borderState.rightOuterAttachment;
           var halfWidth = width / 2;
           var halfHeight = height / 2;
           var radius = Math.min(cornerRadius, halfWidth, halfHeight);
@@ -921,7 +1025,25 @@
             );
           });
 
-          if (borderState.internalRightAttachment) {
+          if (borderState.substitutionAttachment) {
+            bboxLayer.appendChild(
+              createSvgElement("path", {
+                d:
+                  "M " +
+                  suffixRect.minX +
+                  " " +
+                  wordRect.minY +
+                  " H " +
+                  suffixRect.maxX +
+                  " M " +
+                  suffixRect.minX +
+                  " " +
+                  wordRect.maxY +
+                  " H " +
+                  suffixRect.maxX,
+                class: "word-bbox-gap"
+              })
+            );
             bboxLayer.appendChild(
               createSvgElement("path", {
                 d:
@@ -1377,7 +1499,7 @@
               y: anchorPoint.y - directionY * badgeEdgeDistance
             };
 
-            if (entry.badgeStyle === "internal-suffix-substitution") {
+            if (isSubstitutionBadge(entry)) {
               wordRect = getCenterWordRect(metrics, layout);
               suffixRect = getCenterSuffixRect(metrics, layout);
               substitutionTargetX = (suffixRect.minX + suffixRect.maxX) / 2;
@@ -1404,13 +1526,13 @@
             );
             stemNode.setAttribute(
               "x1",
-              entry.badgeStyle === "internal-suffix-substitution"
+              isSubstitutionBadge(entry)
                 ? substitutionTargetX
                 : distances.textEdgePoint.x
             );
             stemNode.setAttribute(
               "y1",
-              entry.badgeStyle === "internal-suffix-substitution"
+              isSubstitutionBadge(entry)
                 ? wordRect.minY
                 : distances.textEdgePoint.y
             );
@@ -1434,7 +1556,7 @@
                 y: metrics.centerY
               },
               textEdgePoint:
-                entry.badgeStyle === "internal-suffix-substitution"
+                isSubstitutionBadge(entry)
                   ? {
                       x: substitutionTargetX,
                       y: wordRect.minY
