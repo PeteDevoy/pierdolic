@@ -1,0 +1,1597 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pierdolić</title>
+    <style>
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+      }
+
+      body {
+        display: flex;
+      }
+
+      .controls {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .nav-button {
+        width: 56px;
+        height: 56px;
+        padding: 0;
+        border: 2px solid #fff;
+        border-radius: 999px;
+        background: #000;
+        color: #fff;
+        font: inherit;
+        font-size: 34px;
+        line-height: 1;
+        cursor: pointer;
+      }
+
+      .nav-button[disabled] {
+        opacity: 0.35;
+        cursor: default;
+      }
+
+      .debug-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 56px;
+        height: 56px;
+        border: 2px solid #fff;
+        border-radius: 999px;
+        background: #000;
+      }
+
+      .debug-toggle input {
+        width: 20px;
+        height: 20px;
+        margin: 0;
+      }
+
+      svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+        background: #000;
+      }
+
+      text {
+        fill: #fff;
+        font-family: sans-serif;
+      }
+
+      .orbit-label-group {
+        cursor: pointer;
+      }
+
+      .label-stem {
+        stroke: #fff;
+        stroke-linecap: round;
+      }
+
+      .label-badge-fill {
+        fill: #000;
+      }
+
+      .label-badge-solid {
+        fill: none;
+        stroke: #fff;
+        stroke-width: 4;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        vector-effect: non-scaling-stroke;
+      }
+
+      .label-badge-dashed {
+        fill: none;
+        stroke: #fff;
+        stroke-width: 4;
+        stroke-linecap: round;
+        stroke-dasharray: 10 8;
+        vector-effect: non-scaling-stroke;
+      }
+
+      .word-bbox-edge {
+        fill: none;
+        stroke: #fff;
+        stroke-width: 4;
+        vector-effect: non-scaling-stroke;
+      }
+
+      .debug-shape {
+        fill: none;
+        pointer-events: none;
+        vector-effect: non-scaling-stroke;
+      }
+
+      .debug-point {
+        pointer-events: none;
+        vector-effect: non-scaling-stroke;
+      }
+    </style>
+    <script>
+      window.addEventListener("load", async function () {
+        var rootVerbNode = {
+          variant:
+            document.getElementById("hello-stem").textContent.trim() +
+            document.getElementById("hello-suffix").textContent.trim(),
+          children: []
+        };
+        var focusedVerbNode = rootVerbNode;
+        var orbitEntries = [];
+        var midpointBias = 0.5;
+        var debugEnabled = false;
+        var debugColors = [
+          "#4ddcff",
+          "#ffb347",
+          "#8dff7a",
+          "#ff8fab",
+          "#b794f4",
+          "#f6e05e",
+          "#63b3ed",
+          "#f687b3"
+        ];
+        var lastLayout = null;
+        var resizeFrame = null;
+
+        async function loadVerbData() {
+          var response = await fetch("data/reduced-verb-data.json");
+          var data;
+
+          if (!response.ok) {
+            throw new Error("Failed to load reduced verb data: " + response.status);
+          }
+
+          data = await response.json();
+
+          return data;
+        }
+
+        function linkVerbTree(node, parentNode) {
+          if (!node || typeof node !== "object") {
+            return;
+          }
+
+          node.parentVerbNode = parentNode || null;
+
+          (Array.isArray(node.children) ? node.children : []).forEach(function (childNode) {
+            linkVerbTree(childNode, node);
+          });
+        }
+
+        function createSvgElement(tagName, attributes) {
+          var element = document.createElementNS("http://www.w3.org/2000/svg", tagName);
+
+          Object.keys(attributes).forEach(function (name) {
+            element.setAttribute(name, attributes[name]);
+          });
+
+          return element;
+        }
+
+        function rectFromBBox(bbox) {
+          return {
+            minX: bbox.x,
+            maxX: bbox.x + bbox.width,
+            minY: bbox.y,
+            maxY: bbox.y + bbox.height
+          };
+        }
+
+        function getPointOnRay(originX, originY, directionX, directionY, distance) {
+          return {
+            x: originX + directionX * distance,
+            y: originY + directionY * distance
+          };
+        }
+
+        function getRectExitDistanceFromCenter(directionX, directionY, rect) {
+          return getRayExitDistanceFromRect(0, 0, directionX, directionY, rect);
+        }
+
+        function getBadgeShapeData(width, height, cornerRadius, orientation, styleVariant) {
+          var halfWidth = width / 2;
+          var halfHeight = height / 2;
+          var radius = Math.min(cornerRadius, halfWidth, halfHeight);
+          var left = -halfWidth;
+          var right = halfWidth;
+          var top = -halfHeight;
+          var bottom = halfHeight;
+          var isSuffixBadge = orientation === "suffix";
+
+          if (styleVariant === "internal-suffix-substitution") {
+            return {
+              left: left,
+              right: right,
+              top: top,
+              bottom: bottom,
+              width: width,
+              height: height,
+              radius: 0,
+              fillPath:
+                "M " +
+                left +
+                " " +
+                top +
+                " H " +
+                right +
+                " V " +
+                bottom +
+                " H " +
+                left +
+                " Z",
+              solidPath: "",
+              dashedPath:
+                "M " +
+                left +
+                " " +
+                top +
+                " H " +
+                right +
+                " M " +
+                left +
+                " " +
+                bottom +
+                " H " +
+                right,
+              fitRect: {
+                minX: left,
+                maxX: right,
+                minY: top,
+                maxY: bottom
+              },
+              collisionRadius: Math.sqrt(width * width + height * height) / 2
+            };
+          }
+
+          return {
+            left: left,
+            right: right,
+            top: top,
+            bottom: bottom,
+            width: width,
+            height: height,
+            radius: radius,
+            fillPath: isSuffixBadge
+              ? "M " +
+                left +
+                " " +
+                top +
+                " H " +
+                (right - radius) +
+                " A " +
+                radius +
+                " " +
+                radius +
+                " 0 0 1 " +
+                right +
+                " " +
+                (top + radius) +
+                " V " +
+                (bottom - radius) +
+                " A " +
+                radius +
+                " " +
+                radius +
+                " 0 0 1 " +
+                (right - radius) +
+                " " +
+                bottom +
+                " H " +
+                left +
+                " Z"
+              : "M " +
+                (left + radius) +
+                " " +
+                top +
+                " H " +
+                right +
+                " V " +
+                bottom +
+                " H " +
+                (left + radius) +
+                " A " +
+                radius +
+                " " +
+                radius +
+                " 0 0 1 " +
+                left +
+                " " +
+                (bottom - radius) +
+                " V " +
+                (top + radius) +
+                " A " +
+                radius +
+                " " +
+                radius +
+                " 0 0 1 " +
+                (left + radius) +
+                " " +
+                top +
+                " Z",
+            solidPath: isSuffixBadge
+              ? "M " +
+                left +
+                " " +
+                top +
+                " H " +
+                (right - radius) +
+                " A " +
+                radius +
+                " " +
+                radius +
+                " 0 0 1 " +
+                right +
+                " " +
+                (top + radius) +
+                " V " +
+                (bottom - radius) +
+                " A " +
+                radius +
+                " " +
+                radius +
+                " 0 0 1 " +
+                (right - radius) +
+                " " +
+                bottom +
+                " H " +
+                left
+              : "M " +
+                right +
+                " " +
+                top +
+                " H " +
+                (left + radius) +
+                " A " +
+                radius +
+                " " +
+                radius +
+                " 0 0 0 " +
+                left +
+                " " +
+                (top + radius) +
+                " V " +
+                (bottom - radius) +
+                " A " +
+                radius +
+                " " +
+                radius +
+                " 0 0 0 " +
+                (left + radius) +
+                " " +
+                bottom +
+                " H " +
+                right,
+            dashedPath: isSuffixBadge
+              ? "M " + left + " " + top + " V " + bottom
+              : "M " + right + " " + top + " V " + bottom,
+            fitRect: {
+              minX: left,
+              maxX: right,
+              minY: top,
+              maxY: bottom
+            },
+            collisionRadius: Math.sqrt(width * width + height * height) / 2
+          };
+        }
+
+        function clamp(value, min, max) {
+          return Math.min(max, Math.max(min, value));
+        }
+
+        // Find how far a ray can travel before it exits a rectangle.
+        function getRayExitDistanceFromRect(originX, originY, directionX, directionY, rect) {
+          var candidates = [];
+
+          if (directionX > 0) {
+            candidates.push((rect.maxX - originX) / directionX);
+          } else if (directionX < 0) {
+            candidates.push((rect.minX - originX) / directionX);
+          }
+
+          if (directionY > 0) {
+            candidates.push((rect.maxY - originY) / directionY);
+          } else if (directionY < 0) {
+            candidates.push((rect.minY - originY) / directionY);
+          }
+
+          return Math.min.apply(
+            null,
+            candidates.filter(function (value) {
+              return value >= 0;
+            })
+          );
+        }
+
+        function getRayExitDistanceFromEllipse(directionX, directionY, radiusX, radiusY) {
+          return 1 / Math.sqrt(
+            (directionX * directionX) / (radiusX * radiusX) +
+              (directionY * directionY) / (radiusY * radiusY)
+          );
+        }
+
+        function constrainLowerBound(bounds, coefficient, value) {
+          if (coefficient > 0) {
+            bounds.min = Math.max(bounds.min, value / coefficient);
+          } else if (coefficient < 0) {
+            bounds.max = Math.min(bounds.max, value / coefficient);
+          } else if (value > 0) {
+            bounds.invalid = true;
+          }
+        }
+
+        function constrainUpperBound(bounds, coefficient, value) {
+          if (coefficient > 0) {
+            bounds.max = Math.min(bounds.max, value / coefficient);
+          } else if (coefficient < 0) {
+            bounds.min = Math.max(bounds.min, value / coefficient);
+          } else if (value < 0) {
+            bounds.invalid = true;
+          }
+        }
+
+        function normalizePrefix(prefix) {
+          return typeof prefix === "string" ? prefix.replace(/-$/, "") : "";
+        }
+
+        function normalizeSuffix(suffix) {
+          return typeof suffix === "string" ? suffix.replace(/^-/, "") : "";
+        }
+
+        function formatSuffixLabel(suffix) {
+          if (typeof suffix !== "string" || !suffix) {
+            return "";
+          }
+
+          return suffix.charAt(0) === "-" ? suffix : "-" + suffix;
+        }
+
+        function getNodeBaseWord(node) {
+          var suffix;
+          var reflexiveSuffix;
+
+          if (!node || typeof node !== "object") {
+            return "";
+          }
+
+          if (typeof node.stem === "string" && node.stem) {
+            suffix = normalizeSuffix(node.suffix);
+
+            return node.stem + suffix;
+          }
+
+          if (typeof node.variant === "string" && node.variant) {
+            reflexiveSuffix = node.reflexiveTarget ? " " + node.reflexiveTarget : "";
+
+            return reflexiveSuffix && node.variant.slice(-reflexiveSuffix.length) === reflexiveSuffix
+              ? node.variant.slice(0, -reflexiveSuffix.length)
+              : node.variant;
+          }
+
+          return "";
+        }
+
+        function getNodeVariant(node) {
+          var baseWord = getNodeBaseWord(node);
+
+          return baseWord + (node && node.reflexiveTarget ? " " + node.reflexiveTarget : "");
+        }
+
+        function getNodePrefix(node) {
+          return normalizePrefix(node && node.prefix);
+        }
+
+        function getTransitionDetails(parentNode, childNode) {
+          var parentPrefix = getNodePrefix(parentNode);
+          var childPrefix = getNodePrefix(childNode);
+          var labelParts = [];
+          var suffixLabel = "";
+          var hasPrefixChange = false;
+          var hasSuffixChange = false;
+          var hasReflexiveChange = false;
+          var isInternalSuffixSubstitution = false;
+          var label;
+
+          if (childPrefix && childPrefix !== parentPrefix) {
+            hasPrefixChange = true;
+            labelParts.push(childPrefix);
+          }
+
+          if (
+            childNode &&
+            childNode.suffixSubstitution &&
+            typeof childNode.suffixSubstitution.to === "string"
+          ) {
+            suffixLabel = formatSuffixLabel(childNode.suffixSubstitution.to);
+          } else if (parentNode && childNode && parentNode.suffix !== childNode.suffix) {
+            suffixLabel = formatSuffixLabel(childNode && childNode.suffix);
+          }
+
+          if (suffixLabel) {
+            hasSuffixChange = true;
+            labelParts.push(suffixLabel);
+          }
+
+          if (
+            childNode &&
+            childNode.reflexiveTarget &&
+            childNode.reflexiveTarget !== (parentNode && parentNode.reflexiveTarget)
+          ) {
+            hasReflexiveChange = true;
+            labelParts.push(childNode.reflexiveTarget);
+          }
+
+          label = labelParts.join(" ").trim() || getNodeVariant(childNode);
+          isInternalSuffixSubstitution = Boolean(
+            childNode &&
+              childNode.suffixSubstitution &&
+              !hasPrefixChange &&
+              !hasReflexiveChange &&
+              parentNode &&
+              parentNode.reflexiveTarget &&
+              childNode.reflexiveTarget === parentNode.reflexiveTarget
+          );
+
+          return {
+            label: label,
+            badgeOrientation:
+              !hasPrefixChange && (hasSuffixChange || hasReflexiveChange) ? "suffix" : "prefix",
+            badgeStyle: isInternalSuffixSubstitution
+              ? "internal-suffix-substitution"
+              : "default"
+          };
+        }
+
+        function getOrbitEntries(node) {
+          return (Array.isArray(node && node.children) ? node.children : [])
+            .map(function (childNode) {
+              var transition = getTransitionDetails(node, childNode);
+
+              return {
+                node: childNode,
+                label: transition.label,
+                badgeOrientation: transition.badgeOrientation,
+                badgeStyle: transition.badgeStyle
+              };
+            })
+            .filter(function (entry) {
+              return Boolean(entry.label);
+            });
+        }
+
+        function getParentVerbNode(node) {
+          return node && node.parentVerbNode ? node.parentVerbNode : null;
+        }
+
+        function getCenterWordBorderState() {
+          var leftAttachment = orbitEntries.some(function (entry) {
+            return entry.badgeOrientation === "prefix";
+          });
+          var rightAttachment = orbitEntries.some(function (entry) {
+            return entry.badgeOrientation === "suffix";
+          });
+          var internalRightAttachment = Boolean(
+            orbitEntries.some(function (entry) {
+              return entry.badgeStyle === "internal-suffix-substitution";
+            })
+          );
+
+          return {
+            leftAttachment: leftAttachment,
+            rightAttachment: rightAttachment,
+            internalRightAttachment: internalRightAttachment
+          };
+        }
+
+        function getRoundedRectOutlinePath(left, top, right, bottom, radius) {
+          return (
+            "M " +
+            (left + radius) +
+            " " +
+            top +
+            " H " +
+            (right - radius) +
+            " A " +
+            radius +
+            " " +
+            radius +
+            " 0 0 1 " +
+            right +
+            " " +
+            (top + radius) +
+            " V " +
+            (bottom - radius) +
+            " A " +
+            radius +
+            " " +
+            radius +
+            " 0 0 1 " +
+            (right - radius) +
+            " " +
+            bottom +
+            " H " +
+            (left + radius) +
+            " A " +
+            radius +
+            " " +
+            radius +
+            " 0 0 1 " +
+            left +
+            " " +
+            (bottom - radius) +
+            " V " +
+            (top + radius) +
+            " A " +
+            radius +
+            " " +
+            radius +
+            " 0 0 1 " +
+            (left + radius) +
+            " " +
+            top
+          );
+        }
+
+        function getCenterWordBorderShapeData(width, height, cornerRadius, borderState) {
+          var leftAttachment = borderState.leftAttachment;
+          var rightAttachment = borderState.rightAttachment;
+          var rightOuterAttachment = rightAttachment && !borderState.internalRightAttachment;
+          var halfWidth = width / 2;
+          var halfHeight = height / 2;
+          var radius = Math.min(cornerRadius, halfWidth, halfHeight);
+          var left = -halfWidth;
+          var right = halfWidth;
+          var top = -halfHeight;
+          var bottom = halfHeight;
+          var baseBadgeShape;
+          var solidPath;
+          var dashedPaths = [];
+
+          if (leftAttachment && rightOuterAttachment) {
+            solidPath =
+              "M " +
+              left +
+              " " +
+              top +
+              " H " +
+              right +
+              " M " +
+              left +
+              " " +
+              bottom +
+              " H " +
+              right;
+            dashedPaths.push("M " + left + " " + top + " V " + bottom);
+            dashedPaths.push("M " + right + " " + top + " V " + bottom);
+          } else if (leftAttachment) {
+            baseBadgeShape = getBadgeShapeData(width, height, radius, "suffix");
+            solidPath = baseBadgeShape.solidPath;
+            dashedPaths.push(baseBadgeShape.dashedPath);
+          } else if (rightOuterAttachment) {
+            baseBadgeShape = getBadgeShapeData(width, height, radius, "prefix");
+            solidPath = baseBadgeShape.solidPath;
+            dashedPaths.push(baseBadgeShape.dashedPath);
+          } else {
+            solidPath = getRoundedRectOutlinePath(left, top, right, bottom, radius);
+          }
+
+          return {
+            solidPath: solidPath,
+            dashedPaths: dashedPaths
+          };
+        }
+
+        function updateBackButton() {
+          var backButton = document.getElementById("back-button");
+          var hasParent = Boolean(getParentVerbNode(focusedVerbNode));
+
+          backButton.disabled = !hasParent;
+        }
+
+        function getCurrentWordText() {
+          return getNodeVariant(focusedVerbNode);
+        }
+
+        function getCenterWordRect(metrics, layout) {
+          return {
+            minX: metrics.bbox.x - layout.centerWordPaddingX,
+            maxX: metrics.bbox.x + metrics.bbox.width + layout.centerWordPaddingX,
+            minY: metrics.bbox.y - layout.centerWordPaddingY,
+            maxY: metrics.bbox.y + metrics.bbox.height + layout.centerWordPaddingY
+          };
+        }
+
+        function getFocusedWordParts() {
+          var prefix = getNodePrefix(focusedVerbNode);
+          var baseWord = getNodeBaseWord(focusedVerbNode);
+          var suffixText = normalizeSuffix(focusedVerbNode && focusedVerbNode.suffix);
+          var stemText = baseWord;
+
+          if (suffixText && baseWord.slice(-suffixText.length) === suffixText) {
+            stemText = baseWord.slice(0, -suffixText.length);
+          }
+
+          return {
+            prefix: prefix,
+            stemText: prefix && stemText.indexOf(prefix) === 0 ? stemText.slice(prefix.length) : stemText,
+            suffixText: suffixText,
+            reflexive: focusedVerbNode && focusedVerbNode.reflexiveTarget
+              ? focusedVerbNode.reflexiveTarget
+              : ""
+          };
+        }
+
+        function renderHelloWorld(layout) {
+          var svg = document.getElementById("scene");
+          var prefixNode = document.getElementById("hello-prefix");
+          var stemNode = document.getElementById("hello-stem");
+          var suffixNode = document.getElementById("hello-suffix");
+          var reflexiveNode = document.getElementById("hello-reflexive");
+          var wordParts = getFocusedWordParts();
+          var selectedPrefix = wordParts.prefix;
+          var stemText = wordParts.stemText;
+          var suffixText = wordParts.suffixText;
+          var reflexiveWord = wordParts.reflexive;
+          var centerX = layout.width / 2;
+          var centerY = layout.height / 2;
+          var joinGap = 0;
+          var reflexiveGap = Math.max(10, layout.helloFontSize * 0.16);
+          var prefixWidth;
+          var stemWidth;
+          var suffixWidth;
+          var mutableWordWidth;
+          var reflexiveWidth;
+          var totalWidth;
+          var phraseStartX;
+          var prefixStartX;
+          var stemStartX;
+          var suffixStartX;
+          var reflexiveStartX;
+
+          prefixNode.textContent = selectedPrefix;
+          stemNode.textContent = stemText;
+          suffixNode.textContent = suffixText;
+          reflexiveNode.textContent = reflexiveWord;
+          prefixNode.style.fontSize = layout.helloFontSize + "px";
+          stemNode.style.fontSize = layout.helloFontSize + "px";
+          suffixNode.style.fontSize = layout.helloFontSize + "px";
+          reflexiveNode.style.fontSize = layout.helloFontSize + "px";
+          prefixNode.setAttribute("y", centerY);
+          stemNode.setAttribute("y", centerY);
+          suffixNode.setAttribute("y", centerY);
+          reflexiveNode.setAttribute("y", centerY);
+          prefixNode.setAttribute("visibility", "visible");
+
+          prefixWidth = selectedPrefix ? prefixNode.getComputedTextLength() : 0;
+          stemWidth = stemNode.getComputedTextLength();
+          suffixWidth = suffixText ? suffixNode.getComputedTextLength() : 0;
+          mutableWordWidth = prefixWidth + joinGap + stemWidth + suffixWidth;
+          reflexiveWidth = reflexiveWord ? reflexiveNode.getComputedTextLength() : 0;
+          totalWidth = mutableWordWidth + (reflexiveWord ? reflexiveGap + reflexiveWidth : 0);
+          phraseStartX = centerX - totalWidth / 2;
+          prefixStartX = phraseStartX;
+          stemStartX = prefixStartX + prefixWidth + joinGap;
+          suffixStartX = stemStartX + stemWidth;
+          reflexiveStartX = prefixStartX + mutableWordWidth + reflexiveGap;
+
+          prefixNode.setAttribute("x", prefixStartX);
+          stemNode.setAttribute("x", stemStartX);
+          suffixNode.setAttribute("x", suffixStartX);
+          reflexiveNode.setAttribute("x", reflexiveStartX);
+          prefixNode.setAttribute("visibility", selectedPrefix ? "visible" : "hidden");
+          suffixNode.setAttribute("visibility", suffixText ? "visible" : "hidden");
+          reflexiveNode.setAttribute("visibility", reflexiveWord ? "visible" : "hidden");
+          svg.setAttribute("aria-label", getCurrentWordText());
+        }
+
+        function setFocusedVerbNode(node) {
+          if (focusedVerbNode === node) {
+            return;
+          }
+
+          focusedVerbNode = node;
+          orbitEntries = getOrbitEntries(node);
+          updateBackButton();
+          renderClockLabels();
+        }
+
+        // Match the SVG coordinate system to the actual viewport so our geometry
+        // uses the real page edges instead of a centered square viewBox.
+        function syncSceneToViewport() {
+          var svg = document.getElementById("scene");
+          var width = svg.clientWidth || window.innerWidth;
+          var height = svg.clientHeight || window.innerHeight;
+          var currentWordLength = Math.max(1, getCurrentWordText().length);
+          var helloFontSize =
+            Math.min(width * 0.095, height * 0.18) * Math.min(1, 12 / currentWordLength);
+          var longestPrefixLength = orbitEntries.reduce(function (longest, entry) {
+            return Math.max(longest, entry.label.length);
+          }, 1);
+          var densityScale = Math.max(0.24, 0.62 - orbitEntries.length * 0.018);
+          var lengthScale = Math.max(0.26, 0.58 - longestPrefixLength * 0.04);
+          var labelFontSizeMax = helloFontSize * Math.min(densityScale, lengthScale);
+          var labelFontSizeMin = Math.max(12, helloFontSize * 0.13);
+          var layout;
+
+          svg.setAttribute("viewBox", "0 0 " + width + " " + height);
+
+          layout = {
+            width: width,
+            height: height,
+            helloFontSize: helloFontSize,
+            labelFontSizeMax: labelFontSizeMax,
+            labelFontSizeMin: labelFontSizeMin,
+            badgeStrokeWidth: 4,
+            badgePaddingFactor: 0.18,
+            badgeMinPadding: 8,
+            badgeCollisionGap: Math.max(6, helloFontSize * 0.04),
+            centerWordPaddingX: Math.max(18, helloFontSize * 0.12),
+            centerWordPaddingY: Math.max(10, helloFontSize * 0.09),
+            centerWordSubstitutionPaddingX: Math.max(8, helloFontSize * 0.05),
+            orbitPaddingX: helloFontSize * (0.35 + orbitEntries.length * 0.005),
+            orbitPaddingY: helloFontSize * (0.42 + orbitEntries.length * 0.004)
+          };
+
+          renderHelloWorld(layout);
+
+          return layout;
+        }
+
+        function getHelloWorldMetrics() {
+          var wordElement = document.getElementById("hello-world");
+          var suffixElement = document.getElementById("hello-suffix");
+          var svg = wordElement.ownerSVGElement;
+          var bbox = wordElement.getBBox();
+          var suffixBBox = suffixElement.getBBox();
+          var viewBox = svg.viewBox.baseVal;
+
+          return {
+            wordElement: wordElement,
+            svg: svg,
+            bbox: bbox,
+            suffixBBox: suffixBBox,
+            viewBox: viewBox,
+            centerX: bbox.x + bbox.width / 2,
+            centerY: bbox.y + bbox.height / 2
+          };
+        }
+
+        function getRelativeRect(node) {
+          return rectFromBBox(node.getBBox());
+        }
+
+        function getCenterSuffixRect(metrics, layout) {
+          return {
+            minX: metrics.suffixBBox.x - layout.centerWordSubstitutionPaddingX,
+            maxX: metrics.suffixBBox.x + metrics.suffixBBox.width + layout.centerWordSubstitutionPaddingX,
+            minY: metrics.bbox.y - layout.centerWordPaddingY,
+            maxY: metrics.bbox.y + metrics.bbox.height + layout.centerWordPaddingY
+          };
+        }
+
+        function renderWordBoundingBox(metrics, layout) {
+          var bboxLayer = document.getElementById("word-bbox-layer");
+          var wordRect = getCenterWordRect(metrics, layout);
+          var suffixRect = getCenterSuffixRect(metrics, layout);
+          var width = wordRect.maxX - wordRect.minX;
+          var height = wordRect.maxY - wordRect.minY;
+          var borderState = getCenterWordBorderState();
+          var radius = Math.min(24, height / 2, width / 5);
+          var borderShape = getCenterWordBorderShapeData(
+            width,
+            height,
+            radius,
+            borderState
+          );
+          var centerX = (wordRect.minX + wordRect.maxX) / 2;
+          var centerY = (wordRect.minY + wordRect.maxY) / 2;
+          var solidPath;
+
+          bboxLayer.textContent = "";
+
+          solidPath = createSvgElement("path", {
+            d: borderShape.solidPath,
+            class: "word-bbox-edge",
+            transform: "translate(" + centerX + " " + centerY + ")"
+          });
+
+          bboxLayer.appendChild(solidPath);
+          borderShape.dashedPaths.forEach(function (dashedPathData) {
+            bboxLayer.appendChild(
+              createSvgElement("path", {
+                d: dashedPathData,
+                class: "word-bbox-edge",
+                transform: "translate(" + centerX + " " + centerY + ")",
+                "stroke-dasharray": "10 8"
+              })
+            );
+          });
+
+          if (borderState.internalRightAttachment) {
+            bboxLayer.appendChild(
+              createSvgElement("path", {
+                d:
+                  "M " +
+                  suffixRect.minX +
+                  " " +
+                  wordRect.minY +
+                  " H " +
+                  suffixRect.maxX +
+                  " M " +
+                  suffixRect.minX +
+                  " " +
+                  wordRect.maxY +
+                  " H " +
+                  suffixRect.maxX,
+                class: "word-bbox-edge",
+                "stroke-dasharray": "10 8"
+              })
+            );
+          }
+        }
+
+        // Keep the label inside the real page edges, but use an optical fit rect
+        // instead of the raw bbox so glyph metrics do not over-constrain it.
+        function getMaxAnchorDistanceInsidePage(metrics, directionX, directionY, fitRect) {
+          var bounds = {
+            min: -Infinity,
+            max: Infinity,
+            invalid: false
+          };
+
+          constrainLowerBound(bounds, directionX, -metrics.centerX - fitRect.minX);
+          constrainUpperBound(
+            bounds,
+            directionX,
+            metrics.viewBox.width - metrics.centerX - fitRect.maxX
+          );
+          constrainLowerBound(bounds, directionY, -metrics.centerY - fitRect.minY);
+          constrainUpperBound(
+            bounds,
+            directionY,
+            metrics.viewBox.height - metrics.centerY - fitRect.maxY
+          );
+
+          if (bounds.invalid) {
+            return null;
+          }
+
+          return bounds.max;
+        }
+
+        window.getDistanceFromHelloWorldToPageEdge = function (radians) {
+          var layout = lastLayout || syncSceneToViewport();
+          var metrics = getHelloWorldMetrics();
+          var directionX = Math.cos(radians);
+          var directionY = Math.sin(radians);
+          var textRect = getCenterWordRect(metrics, layout);
+          var pageRect = {
+            minX: 0,
+            maxX: layout.width,
+            minY: 0,
+            maxY: layout.height
+          };
+          var orbitRadiusX = (textRect.maxX - textRect.minX) / 2 + layout.orbitPaddingX;
+          var orbitRadiusY = (textRect.maxY - textRect.minY) / 2 + layout.orbitPaddingY;
+          var distanceToTextEdge = getRayExitDistanceFromRect(
+            metrics.centerX,
+            metrics.centerY,
+            directionX,
+            directionY,
+            textRect
+          );
+          var distanceToOrbitEdge = getRayExitDistanceFromEllipse(
+            directionX,
+            directionY,
+            orbitRadiusX,
+            orbitRadiusY
+          );
+          var distanceToPageEdge = getRayExitDistanceFromRect(
+            metrics.centerX,
+            metrics.centerY,
+            directionX,
+            directionY,
+            pageRect
+          );
+
+          return {
+            radians: radians,
+            metrics: metrics,
+            directionX: directionX,
+            directionY: directionY,
+            orbitRadiusX: orbitRadiusX,
+            orbitRadiusY: orbitRadiusY,
+            distanceToTextEdge: distanceToTextEdge,
+            distanceToOrbitEdge: distanceToOrbitEdge,
+            distanceToPageEdge: distanceToPageEdge,
+            textEdgePoint: getPointOnRay(
+              metrics.centerX,
+              metrics.centerY,
+              directionX,
+              directionY,
+              distanceToTextEdge
+            ),
+            orbitEdgePoint: getPointOnRay(
+              metrics.centerX,
+              metrics.centerY,
+              directionX,
+              directionY,
+              distanceToOrbitEdge
+            ),
+            pageEdgePoint: getPointOnRay(
+              metrics.centerX,
+              metrics.centerY,
+              directionX,
+              directionY,
+              distanceToPageEdge
+            )
+          };
+        };
+
+        function renderStaticDebug(metrics, layout) {
+          var debugLayer = document.getElementById("debug-layer");
+          var wordRect = getCenterWordRect(metrics, layout);
+          var orbitRadiusX = (wordRect.maxX - wordRect.minX) / 2 + layout.orbitPaddingX;
+          var orbitRadiusY = (wordRect.maxY - wordRect.minY) / 2 + layout.orbitPaddingY;
+
+          debugLayer.appendChild(
+            createSvgElement("rect", {
+              x: 0,
+              y: 0,
+              width: layout.width,
+              height: layout.height,
+              class: "debug-shape",
+              stroke: "#555",
+              "stroke-width": "1",
+              "stroke-dasharray": "6 6"
+            })
+          );
+
+          debugLayer.appendChild(
+            createSvgElement("rect", {
+              x: wordRect.minX,
+              y: wordRect.minY,
+              width: wordRect.maxX - wordRect.minX,
+              height: wordRect.maxY - wordRect.minY,
+              class: "debug-shape",
+              stroke: "#ff4d6d",
+              "stroke-width": "1",
+              "stroke-dasharray": "4 4"
+            })
+          );
+
+          debugLayer.appendChild(
+            createSvgElement("ellipse", {
+              cx: metrics.centerX,
+              cy: metrics.centerY,
+              rx: orbitRadiusX,
+              ry: orbitRadiusY,
+              class: "debug-shape",
+              stroke: "#ffd166",
+              "stroke-width": "1"
+            })
+          );
+
+          debugLayer.appendChild(
+            createSvgElement("circle", {
+              cx: metrics.centerX,
+              cy: metrics.centerY,
+              r: "4",
+              class: "debug-point",
+              fill: "#ffffff"
+            })
+          );
+        }
+
+        function renderRayDebug(debugLayer, placement, color) {
+          debugLayer.appendChild(
+            createSvgElement("line", {
+              x1: placement.originPoint.x,
+              y1: placement.originPoint.y,
+              x2: placement.pageEdgePoint.x,
+              y2: placement.pageEdgePoint.y,
+              class: "debug-shape",
+              stroke: color,
+              "stroke-width": "1",
+              opacity: "0.6"
+            })
+          );
+
+          debugLayer.appendChild(
+            createSvgElement("circle", {
+              cx: placement.textEdgePoint.x,
+              cy: placement.textEdgePoint.y,
+              r: "4",
+              class: "debug-point",
+              fill: "#ff4d6d"
+            })
+          );
+
+          debugLayer.appendChild(
+            createSvgElement("circle", {
+              cx: placement.orbitEdgePoint.x,
+              cy: placement.orbitEdgePoint.y,
+              r: "4.5",
+              class: "debug-point",
+              fill: "#ffd166"
+            })
+          );
+
+          debugLayer.appendChild(
+            createSvgElement("circle", {
+              cx: placement.minAnchorPoint.x,
+              cy: placement.minAnchorPoint.y,
+              r: "4",
+              class: "debug-point",
+              fill: "#ff8fab"
+            })
+          );
+
+          debugLayer.appendChild(
+            createSvgElement("circle", {
+              cx: placement.maxAnchorPoint.x,
+              cy: placement.maxAnchorPoint.y,
+              r: "4",
+              class: "debug-point",
+              fill: "#4ddcff"
+            })
+          );
+
+          debugLayer.appendChild(
+            createSvgElement("circle", {
+              cx: placement.targetPoint.x,
+              cy: placement.targetPoint.y,
+              r: "4",
+              class: "debug-point",
+              fill: "#ffffff",
+              opacity: "0.8"
+            })
+          );
+
+          debugLayer.appendChild(
+            createSvgElement("circle", {
+              cx: placement.anchorPoint.x,
+              cy: placement.anchorPoint.y,
+              r: "5",
+              class: "debug-point",
+              fill: color
+            })
+          );
+
+          debugLayer.appendChild(
+            createSvgElement("rect", {
+              x: placement.actualBBox.x,
+              y: placement.actualBBox.y,
+              width: placement.actualBBox.width,
+              height: placement.actualBBox.height,
+              class: "debug-shape",
+              stroke: color,
+              "stroke-width": "1",
+              "stroke-dasharray": "3 3",
+              opacity: "0.75"
+            })
+          );
+
+          debugLayer.appendChild(
+            createSvgElement("rect", {
+              x: placement.fitBBox.x,
+              y: placement.fitBBox.y,
+              width: placement.fitBBox.width,
+              height: placement.fitBBox.height,
+              class: "debug-shape",
+              stroke: color,
+              "stroke-width": "1",
+              opacity: "0.4"
+            })
+          );
+        }
+
+        function badgesOverlap(firstPlacement, secondPlacement, gap) {
+          var deltaX = firstPlacement.anchorPoint.x - secondPlacement.anchorPoint.x;
+          var deltaY = firstPlacement.anchorPoint.y - secondPlacement.anchorPoint.y;
+          var distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+          return (
+            distance <
+            firstPlacement.badgeOuterRadius + secondPlacement.badgeOuterRadius + gap
+          );
+        }
+
+        function hasBadgeCollisions(placements, gap) {
+          var firstIndex;
+          var secondIndex;
+
+          for (firstIndex = 0; firstIndex < placements.length; firstIndex += 1) {
+            for (secondIndex = firstIndex + 1; secondIndex < placements.length; secondIndex += 1) {
+              if (badgesOverlap(placements[firstIndex], placements[secondIndex], gap)) {
+                return true;
+              }
+            }
+          }
+
+          return false;
+        }
+
+        function buildLabelPlacements(layout, metrics, labelLayer, labelFontSize) {
+          if (!orbitEntries.length) {
+            labelLayer.textContent = "";
+            return [];
+          }
+
+          var angleStep = (Math.PI * 2) / orbitEntries.length;
+          var startAngle = -Math.PI / 2;
+          var placements = [];
+
+          labelLayer.textContent = "";
+
+          orbitEntries.forEach(function (entry, index) {
+            var node = entry.node;
+            var label = entry.label;
+            var badgeOrientation = entry.badgeOrientation;
+            var radians = startAngle + index * angleStep;
+            var distances = window.getDistanceFromHelloWorldToPageEdge(radians);
+            var directionX = distances.directionX;
+            var directionY = distances.directionY;
+            var labelGroup = createSvgElement("g", {
+              class: "orbit-label-group"
+            });
+            var badgeFillNode = createSvgElement("path", {
+              d: "",
+              class: "label-badge-fill",
+              visibility: "hidden"
+            });
+            var badgeSolidNode = createSvgElement("path", {
+              d: "",
+              class: "label-badge-solid",
+              visibility: "hidden"
+            });
+            var badgeDashedNode = createSvgElement("path", {
+              d: "",
+              class: "label-badge-dashed",
+              visibility: "hidden"
+            });
+            var stemNode = createSvgElement("line", {
+              x1: "0",
+              y1: "0",
+              x2: "0",
+              y2: "0",
+              class: "label-stem",
+              stroke: "#fff",
+              "stroke-width": String(layout.badgeStrokeWidth),
+              visibility: "hidden"
+            });
+            var textNode = createSvgElement("text", {
+              x: "0",
+              y: "0",
+              "text-anchor": "middle",
+              "dominant-baseline": "middle",
+              class: "orbit-label",
+              visibility: "hidden"
+            });
+            var actualRect;
+            var badgeFitRect;
+            var usableGap;
+            var minAnchorDistance;
+            var maxAnchorDistance;
+            var targetAnchorDistance;
+            var anchorDistance;
+            var anchorPoint;
+            var targetPoint;
+            var actualBBox;
+            var badgeEdgePoint;
+            var labelCenterOffsetX;
+            var labelCenterOffsetY;
+            var badgeWidth;
+            var badgeHeight;
+            var textWidth;
+            var textHeight;
+            var badgePadding;
+            var badgeShape;
+            var badgeCornerRadius;
+            var badgeEdgeDistance;
+            var substitutionTargetX;
+            var wordRect;
+            var suffixRect;
+            var shiftX = 0;
+
+            textNode.textContent = label;
+            textNode.style.fontSize = labelFontSize + "px";
+            labelGroup.appendChild(badgeFillNode);
+            labelGroup.appendChild(badgeSolidNode);
+            labelGroup.appendChild(badgeDashedNode);
+            labelGroup.appendChild(stemNode);
+            labelGroup.appendChild(textNode);
+            labelGroup.addEventListener("click", function () {
+              setFocusedVerbNode(node);
+            });
+            labelLayer.appendChild(labelGroup);
+
+            actualRect = getRelativeRect(textNode);
+            labelCenterOffsetX = (actualRect.minX + actualRect.maxX) / 2;
+            labelCenterOffsetY = (actualRect.minY + actualRect.maxY) / 2;
+            textWidth = actualRect.maxX - actualRect.minX;
+            textHeight = actualRect.maxY - actualRect.minY;
+            badgePadding = Math.max(layout.badgeMinPadding, labelFontSize * layout.badgePaddingFactor);
+            badgeWidth = textWidth + badgePadding * 2 + layout.badgeStrokeWidth;
+            badgeHeight = textHeight + badgePadding * 2 + layout.badgeStrokeWidth;
+            badgeCornerRadius = Math.min(badgeWidth, badgeHeight) * 0.22;
+            badgeShape = getBadgeShapeData(
+              badgeWidth,
+              badgeHeight,
+              badgeCornerRadius,
+              badgeOrientation,
+              entry.badgeStyle
+            );
+            badgeFitRect = badgeShape.fitRect;
+            badgeEdgeDistance = getRectExitDistanceFromCenter(directionX, directionY, badgeFitRect);
+            usableGap =
+              distances.distanceToPageEdge -
+              distances.distanceToTextEdge -
+              badgeEdgeDistance * 2;
+            minAnchorDistance = distances.distanceToTextEdge + badgeEdgeDistance;
+            maxAnchorDistance = getMaxAnchorDistanceInsidePage(
+              metrics,
+              directionX,
+              directionY,
+              badgeFitRect
+            );
+            targetAnchorDistance =
+              minAnchorDistance + Math.max(0, usableGap) * midpointBias;
+
+            if (maxAnchorDistance === null) {
+              anchorDistance = targetAnchorDistance;
+            } else {
+              anchorDistance = clamp(targetAnchorDistance, minAnchorDistance, maxAnchorDistance);
+            }
+
+            anchorPoint = getPointOnRay(
+              metrics.centerX,
+              metrics.centerY,
+              directionX,
+              directionY,
+              anchorDistance
+            );
+            targetPoint = getPointOnRay(
+              metrics.centerX,
+              metrics.centerY,
+              directionX,
+              directionY,
+              targetAnchorDistance
+            );
+            badgeEdgePoint = {
+              x: anchorPoint.x - directionX * badgeEdgeDistance,
+              y: anchorPoint.y - directionY * badgeEdgeDistance
+            };
+
+            if (entry.badgeStyle === "internal-suffix-substitution") {
+              wordRect = getCenterWordRect(metrics, layout);
+              suffixRect = getCenterSuffixRect(metrics, layout);
+              substitutionTargetX = (suffixRect.minX + suffixRect.maxX) / 2;
+              shiftX = substitutionTargetX - distances.textEdgePoint.x;
+              anchorPoint.x += shiftX;
+              targetPoint.x += shiftX;
+              badgeEdgePoint.x += shiftX;
+            }
+
+            badgeFillNode.setAttribute("d", badgeShape.fillPath);
+            badgeFillNode.setAttribute(
+              "transform",
+              "translate(" + anchorPoint.x + " " + anchorPoint.y + ")"
+            );
+            badgeSolidNode.setAttribute("d", badgeShape.solidPath);
+            badgeSolidNode.setAttribute(
+              "transform",
+              "translate(" + anchorPoint.x + " " + anchorPoint.y + ")"
+            );
+            badgeDashedNode.setAttribute("d", badgeShape.dashedPath);
+            badgeDashedNode.setAttribute(
+              "transform",
+              "translate(" + anchorPoint.x + " " + anchorPoint.y + ")"
+            );
+            stemNode.setAttribute(
+              "x1",
+              entry.badgeStyle === "internal-suffix-substitution"
+                ? substitutionTargetX
+                : distances.textEdgePoint.x
+            );
+            stemNode.setAttribute(
+              "y1",
+              entry.badgeStyle === "internal-suffix-substitution"
+                ? wordRect.minY
+                : distances.textEdgePoint.y
+            );
+            stemNode.setAttribute("x2", badgeEdgePoint.x);
+            stemNode.setAttribute("y2", badgeEdgePoint.y);
+            textNode.setAttribute("x", anchorPoint.x - labelCenterOffsetX);
+            textNode.setAttribute("y", anchorPoint.y - labelCenterOffsetY);
+
+            actualBBox = textNode.getBBox();
+
+            placements.push({
+              labelGroup: labelGroup,
+              badgeFillNode: badgeFillNode,
+              badgeSolidNode: badgeSolidNode,
+              badgeDashedNode: badgeDashedNode,
+              stemNode: stemNode,
+              textNode: textNode,
+              badgeOuterRadius: badgeShape.collisionRadius,
+              originPoint: {
+                x: metrics.centerX,
+                y: metrics.centerY
+              },
+              textEdgePoint:
+                entry.badgeStyle === "internal-suffix-substitution"
+                  ? {
+                      x: substitutionTargetX,
+                      y: wordRect.minY
+                    }
+                  : distances.textEdgePoint,
+              orbitEdgePoint: distances.orbitEdgePoint,
+              minAnchorPoint: getPointOnRay(
+                metrics.centerX,
+                metrics.centerY,
+                directionX,
+                directionY,
+                minAnchorDistance
+              ),
+              maxAnchorPoint: getPointOnRay(
+                metrics.centerX,
+                metrics.centerY,
+                directionX,
+                directionY,
+                maxAnchorDistance === null ? anchorDistance : maxAnchorDistance
+              ),
+              targetPoint: targetPoint,
+              anchorPoint: anchorPoint,
+              pageEdgePoint: distances.pageEdgePoint,
+              actualBBox: actualBBox,
+              fitBBox: {
+                x: anchorPoint.x + badgeFitRect.minX,
+                y: anchorPoint.y + badgeFitRect.minY,
+                width: badgeFitRect.maxX - badgeFitRect.minX,
+                height: badgeFitRect.maxY - badgeFitRect.minY
+              }
+            });
+          });
+
+          return placements;
+        }
+
+        function revealLabelPlacements(placements) {
+          placements.forEach(function (placement) {
+            placement.badgeFillNode.setAttribute("visibility", "visible");
+            placement.badgeSolidNode.setAttribute("visibility", "visible");
+            placement.badgeDashedNode.setAttribute("visibility", "visible");
+            placement.stemNode.setAttribute("visibility", "visible");
+            placement.textNode.setAttribute("visibility", "visible");
+          });
+        }
+
+        function fitLabelPlacements(layout, metrics, labelLayer) {
+          var fontSize = layout.labelFontSizeMax;
+          var placements = buildLabelPlacements(layout, metrics, labelLayer, fontSize);
+
+          while (
+            hasBadgeCollisions(placements, layout.badgeCollisionGap) &&
+            fontSize > layout.labelFontSizeMin
+          ) {
+            fontSize = Math.max(layout.labelFontSizeMin, fontSize * 0.92);
+            placements = buildLabelPlacements(layout, metrics, labelLayer, fontSize);
+          }
+
+          return placements;
+        }
+
+        function renderClockLabels() {
+          var layout = syncSceneToViewport();
+          var metrics = getHelloWorldMetrics();
+          var labelLayer = document.getElementById("label-layer");
+          var debugLayer = document.getElementById("debug-layer");
+          var placements;
+
+          lastLayout = layout;
+          debugLayer.textContent = "";
+          renderWordBoundingBox(metrics, layout);
+
+          placements = fitLabelPlacements(layout, metrics, labelLayer);
+          revealLabelPlacements(placements);
+
+          if (debugEnabled) {
+            renderStaticDebug(metrics, layout);
+            placements.forEach(function (placement, index) {
+              renderRayDebug(
+                debugLayer,
+                placement,
+                debugColors[index % debugColors.length]
+              );
+            });
+          }
+        }
+
+        function scheduleRender() {
+          if (resizeFrame !== null) {
+            cancelAnimationFrame(resizeFrame);
+          }
+
+          resizeFrame = requestAnimationFrame(function () {
+            resizeFrame = null;
+            renderClockLabels();
+          });
+        }
+
+        document.getElementById("debug-toggle").addEventListener("change", function (event) {
+          debugEnabled = event.target.checked;
+          renderClockLabels();
+        });
+
+        document.getElementById("back-button").addEventListener("click", function () {
+          var parentVerbNode = getParentVerbNode(focusedVerbNode);
+
+          if (parentVerbNode) {
+            setFocusedVerbNode(parentVerbNode);
+          }
+        });
+
+        try {
+          rootVerbNode = await loadVerbData();
+          linkVerbTree(rootVerbNode, null);
+          focusedVerbNode = rootVerbNode;
+          orbitEntries = getOrbitEntries(rootVerbNode);
+        } catch (error) {
+          console.error(error);
+        }
+
+        updateBackButton();
+        renderClockLabels();
+        window.addEventListener("resize", scheduleRender);
+      });
+    </script>
+  </head>
+  <body>
+    <div class="controls">
+      <button id="back-button" class="nav-button" type="button" aria-label="Go to parent word">
+        &#8592;
+      </button>
+      <div class="debug-toggle">
+        <input id="debug-toggle" type="checkbox" aria-label="Toggle debug overlay">
+      </div>
+    </div>
+    <svg
+      id="scene"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 100 100"
+      role="img"
+      aria-label="hello world"
+    >
+      <g id="debug-layer"></g>
+      <g id="hello-world">
+        <g id="hello-main-word">
+          <text id="hello-prefix" x="50" y="50" text-anchor="start" dominant-baseline="middle"></text>
+          <text id="hello-stem" x="50" y="50" text-anchor="start" dominant-baseline="middle">
+            pierdol
+          </text>
+          <text id="hello-suffix" x="50" y="50" text-anchor="start" dominant-baseline="middle">
+            ić
+          </text>
+        </g>
+        <text id="hello-reflexive" x="50" y="50" text-anchor="start" dominant-baseline="middle"></text>
+      </g>
+      <g id="word-bbox-layer"></g>
+      <g id="label-layer"></g>
+    </svg>
+  </body>
+</html>

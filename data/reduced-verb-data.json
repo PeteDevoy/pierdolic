@@ -1,0 +1,263 @@
+{
+  "variant": "pierdolić",
+  "prefix": null,
+  "stem": "pierdol",
+  "suffix": "-ić",
+  "children": [
+    {
+      "variant": "dopierdolić",
+      "prefix": "do-",
+      "stem": "dopierdol",
+      "suffix": "-ić",
+      "children": [
+        {
+          "variant": "dopierdalać",
+          "prefix": "do-",
+          "stem": "dopierdal",
+          "suffix": "-ać",
+          "suffixSubstitution": {
+            "from": "-ić",
+            "to": "-ać"
+          }
+        }
+      ]
+    },
+    {
+      "variant": "przypierdolić",
+      "prefix": "przy-",
+      "stem": "przypierdol",
+      "suffix": "-ić",
+      "children": [
+        {
+          "variant": "przypierdalać się",
+          "prefix": "przy-",
+          "stem": "przypierdal",
+          "suffix": "-ać",
+          "suffixSubstitution": {
+            "from": "-ić",
+            "to": "-ać"
+          },
+          "reflexiveTarget": "się"
+        }
+      ]
+    },
+    {
+      "variant": "rozpierdolić",
+      "prefix": "roz-",
+      "stem": "rozpierdol",
+      "suffix": "-ić",
+      "children": [
+        {
+          "variant": "rozpierdalać",
+          "prefix": "roz-",
+          "stem": "rozpierdal",
+          "suffix": "-ać",
+          "suffixSubstitution": {
+            "from": "-ić",
+            "to": "-ać"
+          }
+        },
+        {
+          "variant": "rozpierdolić się",
+          "prefix": "roz-",
+          "stem": "rozpierdol",
+          "suffix": "-ić",
+          "reflexiveTarget": "się"
+        }
+      ]
+    },
+    {
+      "variant": "spierdolić",
+      "prefix": "s-",
+      "stem": "spierdol",
+      "suffix": "-ić",
+      "children": [
+        {
+          "variant": "spierdalać",
+          "prefix": "s-",
+          "stem": "spierdal",
+          "suffix": "-ać",
+          "suffixSubstitution": {
+            "from": "-ić",
+            "to": "-ać"
+          }
+        },
+        {
+          "variant": "spierdolić się",
+          "prefix": "s-",
+          "stem": "spierdol",
+          "suffix": "-ić",
+          "reflexiveTarget": "się"
+        }
+      ]
+    },
+    {
+      "variant": "wpierdolić",
+      "prefix": "w-",
+      "stem": "wpierdol",
+      "suffix": "-ić",
+      "children": [
+        {
+          "variant": "wpierdalać",
+          "prefix": "w-",
+          "stem": "wpierdal",
+          "suffix": "-ać",
+          "suffixSubstitution": {
+            "from": "-ić",
+            "to": "-ać"
+          }
+        },
+        {
+          "variant": "wpierdolić się",
+          "prefix": "w-",
+          "stem": "wpierdol",
+          "suffix": "-ić",
+          "reflexiveTarget": "się"
+        }
+      ]
+    },
+    {
+      "variant": "napierdolić",
+      "prefix": "na-",
+      "stem": "napierdol",
+      "suffix": "-ić",
+      "children": [
+        {
+          "variant": "napierdalać",
+          "prefix": "na-",
+          "stem": "napierdal",
+          "suffix": "-ać",
+          "suffixSubstitution": {
+            "from": "-ić",
+            "to": "-ać"
+          }
+        },
+        {
+          "variant": "napierdolić się",
+          "prefix": "na-",
+          "stem": "napierdol",
+          "suffix": "-ić",
+          "reflexiveTarget": "się",
+          "children": [
+            {
+              "variant": "napierdalać się",
+              "prefix": "na-",
+              "stem": "napierdal",
+              "suffix": "-ać",
+              "suffixSubstitution": {
+                "from": "-ić",
+                "to": "-ać"
+              },
+              "reflexiveTarget": "się"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant": "wypierdolić",
+      "prefix": "wy-",
+      "stem": "wypierdol",
+      "suffix": "-ić",
+      "children": [
+        {
+          "variant": "wypierdalać",
+          "prefix": "wy-",
+          "stem": "wypierdal",
+          "suffix": "-ać",
+          "suffixSubstitution": {
+            "from": "-ić",
+            "to": "-ać"
+          }
+        },
+        {
+          "variant": "wypierdolić się",
+          "prefix": "wy-",
+          "stem": "wypierdol",
+          "suffix": "-ić",
+          "reflexiveTarget": "się",
+          "children": [
+            {
+              "variant": "wypierdalać się",
+              "prefix": "wy-",
+              "stem": "wypierdal",
+              "suffix": "-ać",
+              "suffixSubstitution": {
+                "from": "-ić",
+                "to": "-ać"
+              },
+              "reflexiveTarget": "się"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant": "zapierdolić",
+      "prefix": "za-",
+      "stem": "zapierdol",
+      "suffix": "-ić",
+      "children": [
+        {
+          "variant": "zapierdalać",
+          "prefix": "za-",
+          "stem": "zapierdal",
+          "suffix": "-ać",
+          "suffixSubstitution": {
+            "from": "-ić",
+            "to": "-ać"
+          }
+        },
+        {
+          "variant": "zapierdolić się",
+          "prefix": "za-",
+          "stem": "zapierdol",
+          "suffix": "-ić",
+          "reflexiveTarget": "się",
+          "children": [
+            {
+              "variant": "zapierdalać się",
+              "prefix": "za-",
+              "stem": "zapierdal",
+              "suffix": "-ać",
+              "suffixSubstitution": {
+                "from": "-ić",
+                "to": "-ać"
+              },
+              "reflexiveTarget": "się"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant": "opierdolić",
+      "prefix": "o-",
+      "stem": "opierdol",
+      "suffix": "-ić",
+      "children": [
+        {
+          "variant": "opierdalać",
+          "prefix": "o-",
+          "stem": "opierdal",
+          "suffix": "-ać",
+          "suffixSubstitution": {
+            "from": "-ić",
+            "to": "-ać"
+          }
+        },
+        {
+          "variant": "opierdalać się",
+          "prefix": "o-",
+          "stem": "opierdal",
+          "suffix": "-ać",
+          "suffixSubstitution": {
+            "from": "-ić",
+            "to": "-ać"
+          },
+          "reflexiveTarget": "się"
+        }
+      ]
+    }
+  ]
+}
