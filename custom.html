@@ -586,6 +586,18 @@
           return normalizePrefix(node && node.prefix);
         }
 
+        function areReflexivePairVariants(firstNode, secondNode) {
+          return Boolean(
+            firstNode &&
+              secondNode &&
+              getNodePrefix(firstNode) === getNodePrefix(secondNode) &&
+              normalizeSuffix(firstNode && firstNode.suffix) ===
+                normalizeSuffix(secondNode && secondNode.suffix) &&
+              getNodeBaseWord(firstNode) === getNodeBaseWord(secondNode) &&
+              (firstNode.reflexiveTarget || "") !== (secondNode.reflexiveTarget || "")
+          );
+        }
+
         function hasSuffixSubstitution(node) {
           return Boolean(
             node &&
@@ -663,8 +675,52 @@
           };
         }
 
+        function isVerbNodePartOfReflexivePair(node) {
+          var parentNode = getParentVerbNode(node);
+          var childNodes = Array.isArray(node && node.children) ? node.children : [];
+
+          if (parentNode && areReflexivePairVariants(parentNode, node)) {
+            return true;
+          }
+
+          return childNodes.some(function (childNode) {
+            return areReflexivePairVariants(node, childNode);
+          });
+        }
+
+        function getParentOrbitEntry(node) {
+          var parentNode = getParentVerbNode(node);
+          var reverseSuffix;
+
+          if (
+            !parentNode ||
+            !hasSuffixSubstitution(node) ||
+            !isVerbNodePartOfReflexivePair(parentNode)
+          ) {
+            return null;
+          }
+
+          reverseSuffix =
+            node &&
+            node.suffixSubstitution &&
+            typeof node.suffixSubstitution.from === "string"
+              ? node.suffixSubstitution.from
+              : parentNode && parentNode.suffix;
+
+          if (!reverseSuffix) {
+            return null;
+          }
+
+          return {
+            node: parentNode,
+            label: formatSuffixLabel(reverseSuffix),
+            badgeOrientation: "suffix",
+            badgeStyle: "substitution"
+          };
+        }
+
         function getOrbitEntries(node) {
-          return (Array.isArray(node && node.children) ? node.children : [])
+          var childEntries = (Array.isArray(node && node.children) ? node.children : [])
             .map(function (childNode) {
               var transition = getTransitionDetails(node, childNode);
 
@@ -678,6 +734,9 @@
             .filter(function (entry) {
               return Boolean(entry.label);
             });
+          var parentEntry = getParentOrbitEntry(node);
+
+          return parentEntry ? [parentEntry].concat(childEntries) : childEntries;
         }
 
         function getParentVerbNode(node) {
