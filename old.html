@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pierdolę to...</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/d3@7" defer></script>
+    <script src="main.js" defer></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <main class="microsite-layout">
+        <section class="surface visualization-surface" aria-label="Verb family visualization">
+          <div class="stage-toolbar">
+            <div class="stage-actions">
+              <div class="controls" aria-label="Tree controls">
+                <button id="expand-all" type="button">Expand all</button>
+                <button id="collapse-derived" type="button">Collapse sub-branches</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="tree-stage" id="tree-stage">
+            <div class="legend legend-overlay" id="legend" aria-label="Visual legend"></div>
+            <svg id="tree" role="img" aria-labelledby="tree-desc">
+              <desc id="tree-desc">
+                A collapsible tree of the Polish verb pierdolić and selected derived forms, with aspect, reflexive
+                status, and register encoded visually.
+              </desc>
+            </svg>
+            <div class="tooltip" id="tooltip" hidden></div>
+          </div>
+        </section>
+
+        <aside class="surface details-surface" aria-labelledby="details-title">
+          <div class="details-header">
+            <h2 id="details-title">Loading...</h2>
+            <p id="details-subtitle" class="surface-copy">Fetching verb family data.</p>
+            <div id="prefix-popover" class="prefix-popover" hidden></div>
+          </div>
+          <div id="details-panel" class="details-body"></div>
+        </aside>
+      </main>
+    </div>
+  </body>
+</html>
