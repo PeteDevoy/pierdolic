@@ -155,6 +155,21 @@
       ]
     },
     {
+      "variant": "popierdolić",
+      "prefix": "po-",
+      "stem": "popierdol",
+      "suffix": "-ić",
+      "children": [
+        {
+          "variant": "popierdolić się",
+          "prefix": "po-",
+          "stem": "popierdol",
+          "suffix": "-ić",
+          "reflexiveTarget": "się"
+        }
+      ]
+    },
+    {
       "variant": "wypierdolić",
       "prefix": "wy-",
       "stem": "wypierdol",

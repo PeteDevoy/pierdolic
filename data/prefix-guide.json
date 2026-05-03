@@ -17,9 +17,9 @@
   },
   "po-": {
     "label": "po-",
-    "coreIdea": "distributed / bounded small quantity",
-    "pfvEffect": "delimited action for a bit or in small amounts",
-    "outcomes": ["do briefly", "do here and there"],
+    "coreIdea": "distributed / bounded small quantity / loose episode",
+    "pfvEffect": "delimited action for a bit, in small amounts, or as a finished episode",
+    "outcomes": ["do briefly", "do here and there", "do casually or messily"],
     "exampleLemma": "popisać",
     "exampleGloss": "write a bit"
   },

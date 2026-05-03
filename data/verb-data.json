@@ -583,6 +583,72 @@
       ]
     },
     {
+      "id": "popierdolic",
+      "lemma": "popierdolić",
+      "root": "pierdol",
+      "prefix": "po-",
+      "aspect": "perfective",
+      "reflexive": false,
+      "register": "vulgar",
+      "glosses": [
+        "to fuck something up",
+        "to talk nonsense briefly",
+        "to mix something up / confuse things"
+      ],
+      "examples": [
+        {
+          "polish": "Popierdoliłem ten kod i teraz nic nie działa.",
+          "literalEnglish": "I-fucked-up this code and now nothing works.",
+          "naturalEnglish": "I fucked up the code and now nothing works."
+        },
+        {
+          "polish": "On coś popierdolił na spotkaniu o budżecie.",
+          "literalEnglish": "He something fucked-up/rambled at the meeting about the budget.",
+          "naturalEnglish": "He was talking nonsense about the budget in the meeting."
+        }
+      ],
+      "notes": "Perfective verb indicating a completed episode, often with a negative result. The prefix 'po-' suggests a brief, bounded action or a single instance of messing up, talking nonsense, or confusing things.",
+      "conjugation": {
+        "nonPast1sg": "popierdolę",
+        "nonPast3sg": "popierdoli",
+        "pastMascSg": "popierdolił",
+        "imperative2sg": "popierdol"
+      },
+      "partnerId": "pierdolic",
+      "derivation": "prefixation + perfectivization",
+      "children": [
+        {
+          "id": "popierdolic-sie",
+          "lemma": "popierdolić się",
+          "root": "pierdol",
+          "prefix": "po-",
+          "aspect": "perfective",
+          "reflexive": true,
+          "register": "vulgar",
+          "glosses": [
+            "to go to shit / break down badly",
+            "to get messed up / become chaotic"
+          ],
+          "examples": [
+            {
+              "polish": "Wszystko się popierdoliło w ostatniej chwili.",
+              "literalEnglish": "Everything itself fucked-up in the last moment.",
+              "naturalEnglish": "Everything went to shit at the last moment."
+            }
+          ],
+          "notes": "Reflexive 'się' removes a clear agent and shifts focus to the system/state collapsing or degrading. Common for describing situations, systems, or plans going wrong rather than a person actively causing it.",
+          "conjugation": {
+            "nonPast1sg": "popierdolę się",
+            "nonPast3sg": "popierdoli się",
+            "pastMascSg": "popierdolił się"
+          },
+          "partnerId": "pierdolic-sie",
+          "derivation": "reflexivization",
+          "children": []
+        }
+      ]
+    },
+    {
       "id": "wypierdolic",
       "lemma": "wypierdolić",
       "root": "pierdol",
