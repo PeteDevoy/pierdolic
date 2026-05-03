@@ -2990,6 +2990,15 @@
           };
         }
 
+        function getSubstitutionStemStartPoint(directionY, substitutionTargetX, wordRect, layout) {
+          return {
+            x: substitutionTargetX,
+            y: directionY >= 0
+              ? wordRect.maxY + layout.stemWordGap
+              : wordRect.minY - layout.stemWordGap
+          };
+        }
+
         function renderWordBoundingBox(metrics, layout) {
           var bboxLayer = document.getElementById("word-bbox-layer");
           var wordRect = getCenterWordRect(metrics, layout);
@@ -3007,6 +3016,9 @@
           var centerX = (wordRect.minX + wordRect.maxX) / 2;
           var centerY = (wordRect.minY + wordRect.maxY) / 2;
           var solidPath;
+          var substitutionLineEndX;
+          var substitutionLinePath;
+          var substitutionCornerClearance = layout.badgeStrokeWidth;
 
           bboxLayer.textContent = "";
 
@@ -3029,39 +3041,38 @@
           });
 
           if (borderState.substitutionAttachment) {
+            substitutionLineEndX = borderState.rightOuterAttachment
+              ? suffixRect.maxX
+              : Math.max(
+                  suffixRect.minX,
+                  Math.min(
+                    suffixRect.maxX,
+                    wordRect.maxX - radius - substitutionCornerClearance
+                  )
+                );
+            substitutionLinePath =
+              "M " +
+              suffixRect.minX +
+              " " +
+              wordRect.minY +
+              " H " +
+              substitutionLineEndX +
+              " M " +
+              suffixRect.minX +
+              " " +
+              wordRect.maxY +
+              " H " +
+              substitutionLineEndX;
+
             bboxLayer.appendChild(
               createSvgElement("path", {
-                d:
-                  "M " +
-                  suffixRect.minX +
-                  " " +
-                  wordRect.minY +
-                  " H " +
-                  suffixRect.maxX +
-                  " M " +
-                  suffixRect.minX +
-                  " " +
-                  wordRect.maxY +
-                  " H " +
-                  suffixRect.maxX,
+                d: substitutionLinePath,
                 class: "word-bbox-gap"
               })
             );
             bboxLayer.appendChild(
               createSvgElement("path", {
-                d:
-                  "M " +
-                  suffixRect.minX +
-                  " " +
-                  wordRect.minY +
-                  " H " +
-                  suffixRect.maxX +
-                  " M " +
-                  suffixRect.minX +
-                  " " +
-                  wordRect.maxY +
-                  " H " +
-                  suffixRect.maxX,
+                d: substitutionLinePath,
                 class: "word-bbox-edge",
                 "stroke-dasharray": "10 8"
               })
@@ -3516,10 +3527,12 @@
             }
 
             stemStartPoint = isSubstitutionBadge(entry)
-              ? {
-                  x: substitutionTargetX,
-                  y: wordRect.minY - layout.stemWordGap
-                }
+              ? getSubstitutionStemStartPoint(
+                  directionY,
+                  substitutionTargetX,
+                  wordRect,
+                  layout
+                )
               : {
                   x: distances.textEdgePoint.x + directionX * layout.stemWordGap,
                   y: distances.textEdgePoint.y + directionY * layout.stemWordGap
@@ -3573,10 +3586,14 @@
               },
               textEdgePoint:
                 isSubstitutionBadge(entry)
-                  ? {
-                      x: substitutionTargetX,
-                      y: wordRect.minY
-                    }
+                  ? getSubstitutionStemStartPoint(
+                      directionY,
+                      substitutionTargetX,
+                      wordRect,
+                      {
+                        stemWordGap: 0
+                      }
+                    )
                   : distances.textEdgePoint,
               orbitEdgePoint: distances.orbitEdgePoint,
               minAnchorPoint: getPointOnRay(
