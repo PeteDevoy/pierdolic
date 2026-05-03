@@ -1280,6 +1280,14 @@
           return Boolean(node && node.reflexiveTarget);
         }
 
+        function hasUnchangedTrailingReflexiveToken(parentNode, childNode) {
+          return Boolean(
+            childNode &&
+            childNode.reflexiveTarget &&
+            childNode.reflexiveTarget === (parentNode && parentNode.reflexiveTarget)
+          );
+        }
+
         function isSubstitutionBadge(entry) {
           return (
             entry &&
@@ -1300,7 +1308,7 @@
           var isTerminalSubstitution =
             isSubstitution &&
             isLeafVerbNode(childNode) &&
-            !hasTrailingReflexiveToken(childNode);
+            !hasUnchangedTrailingReflexiveToken(parentNode, childNode);
           var label;
 
           if (childPrefix && childPrefix !== parentPrefix) {
