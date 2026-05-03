@@ -1167,6 +1167,120 @@
           );
         }
 
+        function getCenterWordCornerRadii(borderState, radius) {
+          if (borderState.leftAttachment && borderState.rightOuterAttachment) {
+            return {
+              topLeft: 0,
+              topRight: 0,
+              bottomRight: 0,
+              bottomLeft: 0
+            };
+          }
+
+          if (borderState.leftAttachment) {
+            return {
+              topLeft: 0,
+              topRight: radius,
+              bottomRight: radius,
+              bottomLeft: 0
+            };
+          }
+
+          if (borderState.rightOuterAttachment) {
+            return {
+              topLeft: radius,
+              topRight: 0,
+              bottomRight: 0,
+              bottomLeft: radius
+            };
+          }
+
+          return {
+            topLeft: radius,
+            topRight: radius,
+            bottomRight: radius,
+            bottomLeft: radius
+          };
+        }
+
+        function isPointInsideRoundedRect(x, y, rect, radii) {
+          var corner;
+          var deltaX;
+          var deltaY;
+
+          if (x < rect.minX || x > rect.maxX || y < rect.minY || y > rect.maxY) {
+            return false;
+          }
+
+          if (radii.topLeft && x < rect.minX + radii.topLeft && y < rect.minY + radii.topLeft) {
+            corner = {
+              x: rect.minX + radii.topLeft,
+              y: rect.minY + radii.topLeft,
+              radius: radii.topLeft
+            };
+          } else if (
+            radii.topRight &&
+            x > rect.maxX - radii.topRight &&
+            y < rect.minY + radii.topRight
+          ) {
+            corner = {
+              x: rect.maxX - radii.topRight,
+              y: rect.minY + radii.topRight,
+              radius: radii.topRight
+            };
+          } else if (
+            radii.bottomRight &&
+            x > rect.maxX - radii.bottomRight &&
+            y > rect.maxY - radii.bottomRight
+          ) {
+            corner = {
+              x: rect.maxX - radii.bottomRight,
+              y: rect.maxY - radii.bottomRight,
+              radius: radii.bottomRight
+            };
+          } else if (
+            radii.bottomLeft &&
+            x < rect.minX + radii.bottomLeft &&
+            y > rect.maxY - radii.bottomLeft
+          ) {
+            corner = {
+              x: rect.minX + radii.bottomLeft,
+              y: rect.maxY - radii.bottomLeft,
+              radius: radii.bottomLeft
+            };
+          }
+
+          if (!corner) {
+            return true;
+          }
+
+          deltaX = x - corner.x;
+          deltaY = y - corner.y;
+
+          return deltaX * deltaX + deltaY * deltaY <= corner.radius * corner.radius;
+        }
+
+        function getRayExitDistanceFromRoundedRect(originX, originY, directionX, directionY, rect, radii) {
+          var minDistance = 0;
+          var maxDistance = getRayExitDistanceFromRect(originX, originY, directionX, directionY, rect);
+          var index;
+          var distance;
+          var point;
+
+          for (index = 0; index < 28; index += 1) {
+            distance = (minDistance + maxDistance) / 2;
+            point = getPointOnRay(originX, originY, directionX, directionY, distance);
+
+            if (isPointInsideRoundedRect(point.x, point.y, rect, radii)) {
+              minDistance = distance;
+            } else {
+              maxDistance = distance;
+            }
+          }
+
+          return minDistance;
+        }
+
         function constrainLowerBound(bounds, coefficient, value) {
           if (coefficient > 0) {
             bounds.min = Math.max(bounds.min, value / coefficient);
@@ -2998,6 +3112,25 @@
           };
         }
 
+        function getCenterWordBorderEdgePoint(metrics, layout, directionX, directionY) {
+          var wordRect = getCenterWordRect(metrics, layout);
+          var width = wordRect.maxX - wordRect.minX;
+          var height = wordRect.maxY - wordRect.minY;
+          var radius = Math.min(width, height) * badgeCornerRadiusRatio;
+          var borderState = getCenterWordBorderState();
+          var cornerRadii = getCenterWordCornerRadii(borderState, radius);
+          var distance = getRayExitDistanceFromRoundedRect(
+            metrics.centerX,
+            metrics.centerY,
+            directionX,
+            directionY,
+            wordRect,
+            cornerRadii
+          );
+
+          return getPointOnRay(metrics.centerX, metrics.centerY, directionX, directionY, distance);
+        }
+
         function getSubstitutionStemStartPoint(directionY, substitutionTargetX, wordRect, layout) {
           return {
             x: substitutionTargetX,
@@ -3450,6 +3583,7 @@
             var substitutionTargetX;
             var stemStartPoint;
             var stemEndPoint;
+            var centerWordEdgePoint;
             var wordRect;
             var suffixRect;
             var shiftX = 0;
@@ -3541,10 +3675,21 @@
                   wordRect,
                   layout
                 )
-              : {
-                  x: distances.textEdgePoint.x + directionX * layout.stemWordGap,
-                  y: distances.textEdgePoint.y + directionY * layout.stemWordGap
-                };
+              : null;
+
+            if (!stemStartPoint) {
+              centerWordEdgePoint = getCenterWordBorderEdgePoint(
+                metrics,
+                layout,
+                directionX,
+                directionY
+              );
+              stemStartPoint = {
+                x: centerWordEdgePoint.x + directionX * layout.stemWordGap,
+                y: centerWordEdgePoint.y + directionY * layout.stemWordGap
+              };
+            }
+
             stemEndPoint = {
               x: badgeEdgePoint.x - directionX * layout.stemWordGap,
               y: badgeEdgePoint.y - directionY * layout.stemWordGap
