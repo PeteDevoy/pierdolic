@@ -715,7 +715,9 @@
             node: parentNode,
             label: formatSuffixLabel(reverseSuffix),
             badgeOrientation: "suffix",
-            badgeStyle: "substitution"
+            badgeStyle: hasTrailingReflexiveToken(parentNode)
+              ? "substitution"
+              : "substitution-terminal"
           };
         }
 
