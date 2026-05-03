@@ -2097,6 +2097,7 @@
             labelFontSizeMax: labelFontSizeMax,
             labelFontSizeMin: labelFontSizeMin,
             badgeStrokeWidth: 4,
+            stemWordGap: 3,
             badgePaddingFactor: 0.18,
             badgeMinPadding: 8,
             badgeCollisionGap: Math.max(6, helloFontSize * 0.04),
@@ -2583,6 +2584,7 @@
             var badgeCornerRadius;
             var badgeEdgeDistance;
             var substitutionTargetX;
+            var stemStartPoint;
             var wordRect;
             var suffixRect;
             var shiftX = 0;
@@ -2667,6 +2669,16 @@
               badgeEdgePoint.x += shiftX;
             }
 
+            stemStartPoint = isSubstitutionBadge(entry)
+              ? {
+                  x: substitutionTargetX,
+                  y: wordRect.minY - layout.stemWordGap
+                }
+              : {
+                  x: distances.textEdgePoint.x + directionX * layout.stemWordGap,
+                  y: distances.textEdgePoint.y + directionY * layout.stemWordGap
+                };
+
             badgeFillNode.setAttribute("d", badgeShape.fillPath);
             badgeFillNode.setAttribute(
               "transform",
@@ -2684,15 +2696,11 @@
             );
             stemNode.setAttribute(
               "x1",
-              isSubstitutionBadge(entry)
-                ? substitutionTargetX
-                : distances.textEdgePoint.x
+              stemStartPoint.x
             );
             stemNode.setAttribute(
               "y1",
-              isSubstitutionBadge(entry)
-                ? wordRect.minY
-                : distances.textEdgePoint.y
+              stemStartPoint.y
             );
             stemNode.setAttribute("x2", badgeEdgePoint.x);
             stemNode.setAttribute("y2", badgeEdgePoint.y);
