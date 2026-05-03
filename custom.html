@@ -14,6 +14,8 @@
 
       body {
         display: flex;
+        overflow: hidden;
+        background: #000;
       }
 
       .controls {
@@ -130,6 +132,110 @@
         pointer-events: none;
         vector-effect: non-scaling-stroke;
       }
+
+      .gloss-sheet {
+        position: fixed;
+        left: 50%;
+        bottom: max(16px, env(safe-area-inset-bottom));
+        z-index: 2;
+        width: min(560px, calc(100vw - 28px));
+        max-height: min(34vh, 280px);
+        padding: 16px 18px 18px;
+        border: 2px solid rgba(255, 255, 255, 0.86);
+        border-radius: 24px;
+        background: rgba(0, 0, 0, 0.88);
+        color: #fff;
+        box-sizing: border-box;
+        transform: translateX(-50%);
+        transition: transform 180ms ease;
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.5);
+        overflow: auto;
+        will-change: transform;
+        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px);
+      }
+
+      .gloss-sheet.is-peeking {
+        transform: translateX(-50%) translateY(calc(100% - 38px));
+      }
+
+      .gloss-sheet.is-dragging {
+        transition: none;
+      }
+
+      .gloss-sheet-handle {
+        display: block;
+        width: 44px;
+        height: 20px;
+        margin: 0 auto 14px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+        touch-action: none;
+        user-select: none;
+      }
+
+      .gloss-sheet-handle::before {
+        content: "";
+        display: block;
+        width: 44px;
+        height: 4px;
+        margin: 8px 0;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.66);
+      }
+
+      .gloss-sheet.is-dragging .gloss-sheet-handle {
+        cursor: grabbing;
+      }
+
+      .gloss-list {
+        display: grid;
+        gap: 8px;
+        padding: 0;
+        margin: 0;
+        list-style: none;
+        font: 400 clamp(15px, 4vw, 18px) / 1.35 sans-serif;
+      }
+
+      .gloss-list li {
+        padding: 9px 11px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.07);
+      }
+
+      .gloss-empty {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.68);
+        font: 400 16px / 1.4 sans-serif;
+      }
+
+      @media (max-width: 640px) {
+        .controls {
+          top: max(12px, env(safe-area-inset-top));
+          right: 12px;
+          gap: 10px;
+        }
+
+        .nav-button,
+        .debug-toggle {
+          width: 48px;
+          height: 48px;
+        }
+
+        .nav-button {
+          font-size: 28px;
+        }
+
+        .gloss-sheet {
+          width: calc(100vw - 20px);
+          max-height: 38vh;
+          padding: 14px 14px 16px;
+          border-radius: 20px;
+        }
+      }
     </style>
     <script>
       window.addEventListener("load", async function () {
@@ -143,6 +249,11 @@
         var orbitEntries = [];
         var midpointBias = 0.5;
         var debugEnabled = false;
+        var glossSheetExpanded = false;
+        var glossSheetDrag = null;
+        var glossSheetTransitionCleanup = null;
+        var ignoreNextGlossSheetClick = false;
+        var lexicalIndex = new Map();
         var debugColors = [
           "#4ddcff",
           "#ffb347",
@@ -155,6 +266,7 @@
         ];
         var lastLayout = null;
         var resizeFrame = null;
+        var sheetLayoutFrame = null;
 
         async function loadVerbData() {
           var response = await fetch("data/reduced-verb-data.json");
@@ -167,6 +279,31 @@
           data = await response.json();
 
           return data;
+        }
+
+        async function loadLexicalData() {
+          var response = await fetch("data/verb-data.json");
+          var data;
+
+          if (!response.ok) {
+            throw new Error("Failed to load verb data: " + response.status);
+          }
+
+          data = await response.json();
+
+          return data;
+        }
+
+        function indexLexicalData(node) {
+          if (!node || typeof node !== "object") {
+            return;
+          }
+
+          if (typeof node.lemma === "string" && node.lemma) {
+            lexicalIndex.set(node.lemma, node);
+          }
+
+          (Array.isArray(node.children) ? node.children : []).forEach(indexLexicalData);
         }
 
         function linkVerbTree(node, parentNode) {
@@ -867,6 +1004,287 @@
           backButton.disabled = !hasParent;
         }
 
+        function renderGlossSheet() {
+          var sheet = document.getElementById("gloss-sheet");
+          var body = document.getElementById("gloss-sheet-body");
+          var lemma = getCurrentWordText();
+          var lexicalNode = lexicalIndex.get(lemma);
+          var glosses = lexicalNode && Array.isArray(lexicalNode.glosses)
+            ? lexicalNode.glosses
+            : [];
+
+          body.textContent = "";
+
+          if (!glosses.length) {
+            var emptyMessage = document.createElement("p");
+
+            emptyMessage.className = "gloss-empty";
+            emptyMessage.textContent = "No glosses available yet.";
+            body.appendChild(emptyMessage);
+            sheet.setAttribute("aria-label", lemma + " glosses");
+
+            return;
+          }
+
+          var list = document.createElement("ul");
+
+          list.className = "gloss-list";
+          glosses.forEach(function (gloss) {
+            var item = document.createElement("li");
+
+            item.textContent = gloss;
+            list.appendChild(item);
+          });
+
+          body.appendChild(list);
+          sheet.setAttribute("aria-label", lemma + " glosses");
+        }
+
+        function updateGlossSheetState() {
+          var sheet = document.getElementById("gloss-sheet");
+          var handle = document.getElementById("gloss-sheet-handle");
+
+          sheet.classList.toggle("is-peeking", !glossSheetExpanded);
+          handle.setAttribute("aria-expanded", String(glossSheetExpanded));
+          handle.setAttribute(
+            "aria-label",
+            glossSheetExpanded ? "Hide glosses" : "Show glosses"
+          );
+        }
+
+        function clampValue(value, min, max) {
+          return Math.min(Math.max(value, min), max);
+        }
+
+        function formatGlossSheetTransform(offsetY) {
+          return "translateX(-50%) translateY(" + offsetY + "px)";
+        }
+
+        function getGlossSheetCollapsedOffset() {
+          var sheet = document.getElementById("gloss-sheet");
+          var visiblePeekHeight = 38;
+
+          return Math.max(0, sheet.offsetHeight - visiblePeekHeight);
+        }
+
+        function getCurrentGlossSheetOffset() {
+          var sheet = document.getElementById("gloss-sheet");
+          var transform = window.getComputedStyle(sheet).transform;
+          var values;
+
+          if (!transform || transform === "none") {
+            return glossSheetExpanded ? 0 : getGlossSheetCollapsedOffset();
+          }
+
+          values = transform.match(/matrix3d\((.+)\)/);
+
+          if (values) {
+            return Number(values[1].split(",")[13]) || 0;
+          }
+
+          values = transform.match(/matrix\((.+)\)/);
+
+          if (values) {
+            return Number(values[1].split(",")[5]) || 0;
+          }
+
+          return glossSheetExpanded ? 0 : getGlossSheetCollapsedOffset();
+        }
+
+        function clearGlossSheetTransitionCleanup(sheet) {
+          if (!glossSheetTransitionCleanup) {
+            return;
+          }
+
+          sheet.removeEventListener("transitionend", glossSheetTransitionCleanup);
+          glossSheetTransitionCleanup = null;
+          stopSheetLayoutAnimation();
+        }
+
+        function startSheetLayoutAnimation() {
+          if (sheetLayoutFrame !== null) {
+            return;
+          }
+
+          function tick() {
+            renderClockLabels();
+            sheetLayoutFrame = requestAnimationFrame(tick);
+          }
+
+          sheetLayoutFrame = requestAnimationFrame(tick);
+        }
+
+        function stopSheetLayoutAnimation() {
+          if (sheetLayoutFrame === null) {
+            return;
+          }
+
+          cancelAnimationFrame(sheetLayoutFrame);
+          sheetLayoutFrame = null;
+        }
+
+        function settleGlossSheet(expanded, currentOffset) {
+          var sheet = document.getElementById("gloss-sheet");
+          var targetOffset = expanded ? 0 : getGlossSheetCollapsedOffset();
+          var startOffset = typeof currentOffset === "number"
+            ? currentOffset
+            : getCurrentGlossSheetOffset();
+
+          clearGlossSheetTransitionCleanup(sheet);
+          sheet.classList.remove("is-dragging");
+          sheet.style.transform = formatGlossSheetTransform(startOffset);
+          sheet.offsetHeight;
+
+          glossSheetExpanded = expanded;
+          updateGlossSheetState();
+          sheet.style.transform = formatGlossSheetTransform(targetOffset);
+
+          if (Math.abs(targetOffset - startOffset) < 0.5) {
+            sheet.style.transform = "";
+            renderClockLabels();
+            return;
+          }
+
+          startSheetLayoutAnimation();
+
+          glossSheetTransitionCleanup = function (event) {
+            if (event.target !== sheet || event.propertyName !== "transform") {
+              return;
+            }
+
+            sheet.style.transform = "";
+            clearGlossSheetTransitionCleanup(sheet);
+            renderClockLabels();
+          };
+
+          sheet.addEventListener("transitionend", glossSheetTransitionCleanup);
+        }
+
+        function handleGlossSheetPointerDown(event) {
+          var sheet = document.getElementById("gloss-sheet");
+          var now;
+          var startOffset;
+
+          if (event.button !== 0) {
+            return;
+          }
+
+          event.preventDefault();
+          clearGlossSheetTransitionCleanup(sheet);
+          startOffset = getCurrentGlossSheetOffset();
+          now = window.performance.now();
+
+          glossSheetDrag = {
+            pointerId: event.pointerId,
+            startY: event.clientY,
+            startOffset: startOffset,
+            currentOffset: startOffset,
+            collapsedOffset: getGlossSheetCollapsedOffset(),
+            lastY: event.clientY,
+            lastTime: now,
+            velocityY: 0,
+            moved: false
+          };
+
+          sheet.classList.add("is-dragging");
+          sheet.style.transform = formatGlossSheetTransform(startOffset);
+          scheduleRender();
+          event.currentTarget.setPointerCapture(event.pointerId);
+        }
+
+        function handleGlossSheetPointerMove(event) {
+          var now;
+          var deltaY;
+          var offsetY;
+          var timeDelta;
+
+          if (!glossSheetDrag || event.pointerId !== glossSheetDrag.pointerId) {
+            return;
+          }
+
+          event.preventDefault();
+          now = window.performance.now();
+          deltaY = event.clientY - glossSheetDrag.startY;
+          offsetY = clampValue(
+            glossSheetDrag.startOffset + deltaY,
+            0,
+            glossSheetDrag.collapsedOffset
+          );
+          timeDelta = now - glossSheetDrag.lastTime;
+
+          if (timeDelta > 0) {
+            glossSheetDrag.velocityY = (event.clientY - glossSheetDrag.lastY) / timeDelta;
+          }
+
+          glossSheetDrag.currentOffset = offsetY;
+          glossSheetDrag.lastY = event.clientY;
+          glossSheetDrag.lastTime = now;
+          glossSheetDrag.moved = glossSheetDrag.moved || Math.abs(deltaY) > 4;
+
+          document.getElementById("gloss-sheet").style.transform =
+            formatGlossSheetTransform(offsetY);
+          scheduleRender();
+        }
+
+        function handleGlossSheetPointerEnd(event) {
+          var shouldExpand;
+          var flickThreshold = 0.45;
+          var now;
+          var deltaY;
+          var timeDelta;
+
+          if (!glossSheetDrag || event.pointerId !== glossSheetDrag.pointerId) {
+            return;
+          }
+
+          event.preventDefault();
+          now = window.performance.now();
+          deltaY = event.clientY - glossSheetDrag.startY;
+          timeDelta = now - glossSheetDrag.lastTime;
+
+          if (timeDelta > 0) {
+            glossSheetDrag.velocityY = (event.clientY - glossSheetDrag.lastY) / timeDelta;
+          }
+
+          glossSheetDrag.currentOffset = clampValue(
+            glossSheetDrag.startOffset + deltaY,
+            0,
+            glossSheetDrag.collapsedOffset
+          );
+          glossSheetDrag.moved = glossSheetDrag.moved || Math.abs(deltaY) > 4;
+
+          if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+            event.currentTarget.releasePointerCapture(event.pointerId);
+          }
+
+          if (glossSheetDrag.velocityY < -flickThreshold) {
+            shouldExpand = true;
+          } else if (glossSheetDrag.velocityY > flickThreshold) {
+            shouldExpand = false;
+          } else {
+            shouldExpand = glossSheetDrag.currentOffset < glossSheetDrag.collapsedOffset / 2;
+          }
+
+          if (glossSheetDrag.moved || shouldExpand !== glossSheetExpanded) {
+            ignoreNextGlossSheetClick = true;
+            window.setTimeout(function () {
+              ignoreNextGlossSheetClick = false;
+            }, 350);
+          }
+
+          settleGlossSheet(shouldExpand, glossSheetDrag.currentOffset);
+          glossSheetDrag = null;
+        }
+
+        function handleGlossSheetPointerCancel(event) {
+          if (!glossSheetDrag || event.pointerId !== glossSheetDrag.pointerId) {
+            return;
+          }
+
+          settleGlossSheet(glossSheetExpanded, glossSheetDrag.currentOffset);
+          glossSheetDrag = null;
+        }
+
         function getCurrentWordText() {
           return getNodeVariant(focusedVerbNode);
         }
@@ -971,15 +1389,28 @@
           focusedVerbNode = node;
           orbitEntries = getOrbitEntries(node);
           updateBackButton();
+          renderGlossSheet();
           renderClockLabels();
         }
 
-        // Match the SVG coordinate system to the actual viewport so our geometry
-        // uses the real page edges instead of a centered square viewBox.
+        function getVisualizationLayoutHeight(viewportHeight) {
+          var sheet = document.getElementById("gloss-sheet");
+          var sheetRect = sheet ? sheet.getBoundingClientRect() : null;
+          var visualGap = 12;
+          var availableHeight = sheetRect
+            ? sheetRect.top - visualGap
+            : viewportHeight;
+
+          return clamp(availableHeight, 1, viewportHeight);
+        }
+
+        // Match the SVG coordinate system to the actual viewport while keeping
+        // the graph inside the vertical space not occupied by the bottom sheet.
         function syncSceneToViewport() {
           var svg = document.getElementById("scene");
           var width = svg.clientWidth || window.innerWidth;
-          var height = svg.clientHeight || window.innerHeight;
+          var viewportHeight = window.innerHeight;
+          var height = getVisualizationLayoutHeight(viewportHeight);
           var currentWordLength = Math.max(1, getCurrentWordText().length);
           var helloFontSize =
             Math.min(width * 0.095, height * 0.18) * Math.min(1, 12 / currentWordLength);
@@ -992,11 +1423,13 @@
           var labelFontSizeMin = Math.max(12, helloFontSize * 0.13);
           var layout;
 
+          svg.style.height = height + "px";
           svg.setAttribute("viewBox", "0 0 " + width + " " + height);
 
           layout = {
             width: width,
             height: height,
+            viewportHeight: viewportHeight,
             helloFontSize: helloFontSize,
             labelFontSizeMax: labelFontSizeMax,
             labelFontSizeMin: labelFontSizeMin,
@@ -1129,7 +1562,7 @@
 
         // Keep the label inside the real page edges, but use an optical fit rect
         // instead of the raw bbox so glyph metrics do not over-constrain it.
-        function getMaxAnchorDistanceInsidePage(metrics, directionX, directionY, fitRect) {
+        function getMaxAnchorDistanceInsidePage(metrics, layout, directionX, directionY, fitRect) {
           var bounds = {
             min: -Infinity,
             max: Infinity,
@@ -1140,13 +1573,13 @@
           constrainUpperBound(
             bounds,
             directionX,
-            metrics.viewBox.width - metrics.centerX - fitRect.maxX
+            layout.width - metrics.centerX - fitRect.maxX
           );
           constrainLowerBound(bounds, directionY, -metrics.centerY - fitRect.minY);
           constrainUpperBound(
             bounds,
             directionY,
-            metrics.viewBox.height - metrics.centerY - fitRect.maxY
+            layout.height - metrics.centerY - fitRect.maxY
           );
 
           if (bounds.invalid) {
@@ -1528,6 +1961,7 @@
             minAnchorDistance = distances.distanceToTextEdge + badgeEdgeDistance;
             maxAnchorDistance = getMaxAnchorDistanceInsidePage(
               metrics,
+              layout,
               directionX,
               directionY,
               badgeFitRect
@@ -1721,6 +2155,24 @@
           renderClockLabels();
         });
 
+        document.getElementById("gloss-sheet-handle").addEventListener("pointerdown", handleGlossSheetPointerDown);
+
+        document.getElementById("gloss-sheet-handle").addEventListener("pointermove", handleGlossSheetPointerMove);
+
+        document.getElementById("gloss-sheet-handle").addEventListener("pointerup", handleGlossSheetPointerEnd);
+
+        document.getElementById("gloss-sheet-handle").addEventListener("pointercancel", handleGlossSheetPointerCancel);
+
+        document.getElementById("gloss-sheet-handle").addEventListener("click", function (event) {
+          if (ignoreNextGlossSheetClick) {
+            event.preventDefault();
+            ignoreNextGlossSheetClick = false;
+            return;
+          }
+
+          settleGlossSheet(!glossSheetExpanded);
+        });
+
         document.getElementById("back-button").addEventListener("click", function () {
           var parentVerbNode = getParentVerbNode(focusedVerbNode);
 
@@ -1730,7 +2182,10 @@
         });
 
         try {
-          rootVerbNode = await loadVerbData();
+          var loadedData = await Promise.all([loadVerbData(), loadLexicalData()]);
+
+          rootVerbNode = loadedData[0];
+          indexLexicalData(loadedData[1]);
           linkVerbTree(rootVerbNode, null);
           focusedVerbNode = rootVerbNode;
           orbitEntries = getOrbitEntries(rootVerbNode);
@@ -1739,6 +2194,8 @@
         }
 
         updateBackButton();
+        renderGlossSheet();
+        updateGlossSheetState();
         renderClockLabels();
         window.addEventListener("resize", scheduleRender);
       });
@@ -1753,6 +2210,17 @@
         <input id="debug-toggle" type="checkbox" aria-label="Toggle debug overlay">
       </div>
     </div>
+    <aside id="gloss-sheet" class="gloss-sheet is-peeking" aria-live="polite" aria-label="Glosses">
+      <button
+        id="gloss-sheet-handle"
+        class="gloss-sheet-handle"
+        type="button"
+        aria-controls="gloss-sheet-body"
+        aria-expanded="false"
+        aria-label="Show glosses"
+      ></button>
+      <div id="gloss-sheet-body"></div>
+    </aside>
     <svg
       id="scene"
       xmlns="http://www.w3.org/2000/svg"
