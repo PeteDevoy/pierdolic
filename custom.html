@@ -23,12 +23,16 @@
         --sheet-width: min(560px, calc(100vw - 28px));
         --tray-height: 64px;
         --sheet-tray-gap: 10px;
+        --nav-button-size: 56px;
+        --visualization-control-gap: 16px;
+        --visualization-width: 100vw;
+        --visualization-height: 100vh;
       }
 
       .controls {
         position: fixed;
-        top: 16px;
-        right: 16px;
+        top: calc(var(--visualization-control-gap) + env(safe-area-inset-top));
+        left: calc(var(--visualization-width) - var(--nav-button-size) - var(--visualization-control-gap));
         z-index: 1;
         display: flex;
         align-items: center;
@@ -36,8 +40,11 @@
       }
 
       .nav-button {
-        width: 56px;
-        height: 56px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: var(--nav-button-size);
+        height: var(--nav-button-size);
         padding: 0;
         border: 2px solid #fff;
         border-radius: 999px;
@@ -47,6 +54,15 @@
         font-size: 34px;
         line-height: 1;
         cursor: pointer;
+      }
+
+      .nav-button-icon {
+        display: block;
+        width: calc(var(--nav-button-size) * 0.46);
+        height: calc(var(--nav-button-size) * 0.46);
+        background: currentColor;
+        -webkit-mask: url("arrow.svg") center / contain no-repeat;
+        mask: url("arrow.svg") center / contain no-repeat;
       }
 
       .nav-button[disabled] {
@@ -183,6 +199,11 @@
 
       .gloss-sheet.is-dragging .gloss-sheet-handle {
         cursor: grabbing;
+      }
+
+      .desktop-inspector-toggle,
+      .desktop-inspector-nav {
+        display: none;
       }
 
       #gloss-sheet-body {
@@ -380,17 +401,12 @@
       @media (max-width: 640px) {
         :root {
           --sheet-width: calc(100vw - 20px);
+          --nav-button-size: 48px;
+          --visualization-control-gap: 12px;
         }
 
         .controls {
-          top: max(12px, env(safe-area-inset-top));
-          right: 12px;
           gap: 10px;
-        }
-
-        .nav-button {
-          width: 48px;
-          height: 48px;
         }
 
         .nav-button {
@@ -401,6 +417,256 @@
           max-height: 38vh;
           padding: 0 14px 16px;
           border-radius: 20px;
+        }
+      }
+
+      @media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+        :root {
+          --desktop-inspector-width: clamp(380px, 30vw, 520px);
+          --desktop-inspector-rail-width: 72px;
+          --desktop-inspector-edge-gap: 24px;
+          --visualization-sidebar-gap: 24px;
+          --visualization-width: calc(
+            100vw -
+            var(--desktop-inspector-rail-width) -
+            var(--desktop-inspector-edge-gap) -
+            var(--visualization-sidebar-gap)
+          );
+        }
+
+        .bottom-tray {
+          display: none;
+        }
+
+        .gloss-sheet {
+          left: auto;
+          right: 24px;
+          top: var(--desktop-inspector-edge-gap);
+          bottom: var(--desktop-inspector-edge-gap);
+          width: var(--desktop-inspector-width);
+          max-height: none;
+          height: auto;
+          padding: 0;
+          border: 0;
+          border-radius: 0;
+          background: transparent;
+          transform: none;
+          transition: width 180ms ease;
+          box-shadow: none;
+          overflow: visible;
+          -webkit-backdrop-filter: none;
+          backdrop-filter: none;
+        }
+
+        .gloss-sheet.has-desktop-expanded-panel {
+          top: var(--desktop-inspector-edge-gap);
+          bottom: var(--desktop-inspector-edge-gap);
+          height: auto;
+        }
+
+        .gloss-sheet.is-peeking,
+        .gloss-sheet.is-dragging {
+          transform: none;
+        }
+
+        .gloss-sheet.is-desktop-dragging {
+          transition: none;
+        }
+
+        .gloss-sheet-handle {
+          display: none;
+        }
+
+        .desktop-inspector-toggle {
+          position: absolute;
+          left: -18px;
+          top: 50%;
+          transform: translateY(-50%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 16px;
+          height: 64px;
+          padding: 0;
+          border: 0;
+          border-radius: 999px;
+          background: transparent;
+          color: #fff;
+          cursor: pointer;
+          touch-action: none;
+          user-select: none;
+        }
+
+        .desktop-inspector-toggle::before {
+          content: "";
+          display: block;
+          width: 3px;
+          height: 28px;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.68);
+        }
+
+        .desktop-inspector-nav {
+          display: flex;
+          flex: 1 1 auto;
+          flex-direction: column;
+          gap: 10px;
+          min-height: 0;
+          height: 100%;
+          max-height: none;
+          padding: 10px 0;
+          box-sizing: border-box;
+          overflow: hidden;
+        }
+
+        .gloss-sheet.has-desktop-expanded-panel .desktop-inspector-nav {
+          height: 100%;
+          max-height: none;
+        }
+
+        .desktop-inspector-section {
+          display: flex;
+          flex: 0 0 auto;
+          flex-direction: column;
+          gap: 0;
+          min-height: 0;
+          border-radius: 18px;
+          background: rgba(255, 255, 255, 0.07);
+          box-sizing: border-box;
+          overflow: hidden;
+          -webkit-backdrop-filter: blur(12px);
+          backdrop-filter: blur(12px);
+        }
+
+        .desktop-inspector-section.has-expanded {
+          flex: 1 1 0;
+        }
+
+        .desktop-inspector-header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px;
+        }
+
+        .desktop-inspector-section.has-expanded .desktop-inspector-header {
+          background: rgba(255, 255, 255, 0.12);
+        }
+
+        .desktop-inspector-tab {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex: 1 1 auto;
+          width: auto;
+          min-height: 48px;
+          padding: 0 12px;
+          border: 0;
+          border-radius: 12px;
+          background: transparent;
+          color: #fff;
+          cursor: pointer;
+          text-align: left;
+        }
+
+        .desktop-inspector-tab.is-active {
+          background: transparent;
+        }
+
+        .desktop-inspector-icon {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          flex: 0 0 36px;
+          width: 36px;
+          height: 36px;
+          border-radius: 999px;
+          font-size: 22px;
+          line-height: 1;
+        }
+
+        .desktop-inspector-label {
+          overflow: hidden;
+          font: 700 15px / 1.2 sans-serif;
+          white-space: nowrap;
+          opacity: 1;
+          transition: opacity 160ms ease;
+        }
+
+        .desktop-inspector-actions {
+          display: none;
+          flex: 0 0 auto;
+        }
+
+        .desktop-inspector-section.has-expanded .desktop-inspector-actions {
+          display: flex;
+        }
+
+        .desktop-inspector-actions .example-translation-toggle {
+          width: 126px;
+        }
+
+        .desktop-inspector-panel {
+          flex: 0 1 auto;
+          min-height: 0;
+          max-height: 0;
+          margin: 0;
+          padding: 0 12px;
+          opacity: 0;
+          overflow: hidden;
+          pointer-events: none;
+          transition:
+            max-height 180ms ease,
+            margin 180ms ease,
+            opacity 180ms ease;
+        }
+
+        .desktop-inspector-panel.is-expanded {
+          flex: 1 1 auto;
+          max-height: none;
+          margin: 0 0 14px;
+          padding-top: 10px;
+          opacity: 1;
+          overflow-y: auto;
+          pointer-events: auto;
+        }
+
+        .gloss-sheet.is-desktop-collapsed {
+          width: var(--desktop-inspector-rail-width);
+        }
+
+        .gloss-sheet.is-desktop-collapsed .desktop-inspector-header {
+          padding: 8px;
+        }
+
+        .gloss-sheet.is-desktop-collapsed .desktop-inspector-tab {
+          justify-content: center;
+          gap: 0;
+          padding: 0;
+        }
+
+        .gloss-sheet.is-desktop-collapsed .desktop-inspector-label {
+          width: 0;
+          opacity: 0;
+        }
+
+        .gloss-sheet.is-desktop-collapsed .desktop-inspector-actions {
+          display: none;
+        }
+
+        .gloss-sheet.is-desktop-collapsed .desktop-inspector-panel,
+        #gloss-sheet-body {
+          display: none;
+        }
+
+        .gloss-list,
+        .formation-stack,
+        .example-stack {
+          font-size: 16px;
+        }
+
+        .formation-token {
+          font-size: 26px;
         }
       }
     </style>
@@ -420,6 +686,15 @@
         var exampleTranslationMode = "natural";
         var badgeCornerRadiusRatio = 0.22;
         var glossSheetExpanded = false;
+        var desktopInspectorExpanded = false;
+        var desktopExpandedModes = {
+          glosses: false,
+          prefix: false,
+          examples: false
+        };
+        var desktopInspectorDrag = null;
+        var desktopInspectorTransitionCleanup = null;
+        var ignoreNextDesktopInspectorClick = false;
         var glossSheetDrag = null;
         var glossSheetTransitionCleanup = null;
         var ignoreNextGlossSheetClick = false;
@@ -803,6 +1078,11 @@
 
         function clamp(value, min, max) {
           return Math.min(max, Math.max(min, value));
+        }
+
+        function usesDesktopInspectorLayout() {
+          return window.matchMedia &&
+            window.matchMedia("(min-width: 1024px) and (hover: hover) and (pointer: fine)").matches;
         }
 
         // Find how far a ray can travel before it exits a rectangle.
@@ -1229,15 +1509,71 @@
         }
 
         function updateTrayButtons() {
+          var isDesktopLayout = usesDesktopInspectorLayout();
+
           Array.prototype.forEach.call(
             document.querySelectorAll("[data-sheet-mode]"),
             function (button) {
-              var isActive = button.getAttribute("data-sheet-mode") === activeSheetMode;
+              var mode = button.getAttribute("data-sheet-mode");
+              var isInspectorTab = button.hasAttribute("data-inspector-tab");
+              var isActive = isDesktopLayout && isInspectorTab
+                ? desktopInspectorExpanded && Boolean(desktopExpandedModes[mode])
+                : mode === activeSheetMode;
+              var isExpanded = isDesktopLayout &&
+                isInspectorTab &&
+                desktopInspectorExpanded &&
+                Boolean(desktopExpandedModes[mode]);
 
               button.classList.toggle("is-active", isActive);
+              button.classList.toggle("is-expanded", isExpanded);
               button.setAttribute("aria-pressed", String(isActive));
+
+              if (isInspectorTab) {
+                button.setAttribute("aria-expanded", String(isExpanded));
+              }
             }
           );
+        }
+
+        function updateDesktopInspectorState() {
+          var sheet = document.getElementById("gloss-sheet");
+          var toggle = document.getElementById("desktop-inspector-toggle");
+          var isDesktopLayout = usesDesktopInspectorLayout();
+          var hasExpandedPanel = false;
+
+          sheet.classList.toggle("is-desktop-collapsed", isDesktopLayout && !desktopInspectorExpanded);
+          sheet.classList.toggle("is-desktop-expanded", isDesktopLayout && desktopInspectorExpanded);
+
+          Array.prototype.forEach.call(
+            document.querySelectorAll("[data-inspector-panel]"),
+            function (panel) {
+              var mode = panel.getAttribute("data-inspector-panel");
+              var section = document.querySelector('[data-inspector-section="' + mode + '"]');
+              var isExpanded = isDesktopLayout &&
+                desktopInspectorExpanded &&
+                Boolean(desktopExpandedModes[mode]);
+
+              hasExpandedPanel = hasExpandedPanel || isExpanded;
+              panel.classList.toggle("is-expanded", isExpanded);
+              panel.setAttribute("aria-hidden", String(!isExpanded));
+
+              if (section) {
+                section.classList.toggle("has-expanded", isExpanded);
+              }
+            }
+          );
+
+          sheet.classList.toggle("has-desktop-expanded-panel", hasExpandedPanel);
+
+          if (toggle) {
+            toggle.setAttribute("aria-expanded", String(isDesktopLayout && desktopInspectorExpanded));
+            toggle.setAttribute(
+              "aria-label",
+              isDesktopLayout && desktopInspectorExpanded
+                ? "Collapse inspector"
+                : "Expand inspector"
+            );
+          }
         }
 
         function renderDetailSheet(shouldResetScroll) {
@@ -1252,26 +1588,68 @@
           updateTrayButtons();
 
           if (activeSheetMode === "prefix") {
-            renderFormationCard(body, lemma);
+            renderFormationCard(body, lemma, {
+              omitHeader: false
+            });
             sheet.setAttribute("aria-label", lemma + " prefix lens");
-            return;
-          }
-
-          if (activeSheetMode === "examples") {
-            renderExamplesCard(body, lemma);
+          } else if (activeSheetMode === "examples") {
+            renderExamplesCard(body, lemma, {
+              omitHeader: false
+            });
             sheet.setAttribute("aria-label", lemma + " examples");
-            return;
+          } else {
+            renderGlossesCard(body, lemma, {
+              omitHeader: false
+            });
+            sheet.setAttribute("aria-label", lemma + " glosses");
           }
 
-          renderGlossesCard(body, lemma);
-          sheet.setAttribute("aria-label", lemma + " glosses");
+          renderDesktopInspectorPanels(shouldResetScroll);
+          updateDesktopInspectorState();
+        }
+
+        function renderDesktopInspectorPanels(shouldResetScroll) {
+          var lemma = getCurrentWordText();
+          var exampleActions = document.querySelector('[data-inspector-actions="examples"]');
+
+          if (exampleActions) {
+            exampleActions.textContent = "";
+            exampleActions.appendChild(createExampleTranslationToggle());
+          }
+
+          Array.prototype.forEach.call(
+            document.querySelectorAll("[data-inspector-panel]"),
+            function (panel) {
+              var mode = panel.getAttribute("data-inspector-panel");
+
+              panel.textContent = "";
+              if (shouldResetScroll !== false) {
+                panel.scrollTop = 0;
+              }
+
+              if (mode === "prefix") {
+                renderFormationCard(panel, lemma, {
+                  omitHeader: true
+                });
+              } else if (mode === "examples") {
+                renderExamplesCard(panel, lemma, {
+                  omitHeader: true,
+                  omitTranslationToggle: true
+                });
+              } else {
+                renderGlossesCard(panel, lemma, {
+                  omitHeader: true
+                });
+              }
+            }
+          );
         }
 
         function appendSheetHeader(body, titleText, trailingNode) {
           var header = document.createElement("div");
           var title = document.createElement("h2");
 
-          header.className = "sheet-section-header";
+          header.className = "sheet-section-header " + (trailingNode ? "has-trailing" : "is-title-only");
           title.className = "sheet-section-title";
           title.textContent = titleText;
           header.appendChild(title);
@@ -1283,13 +1661,15 @@
           body.appendChild(header);
         }
 
-        function renderGlossesCard(body, lemma) {
+        function renderGlossesCard(body, lemma, options) {
           var lexicalNode = getFocusedLexicalNode();
           var glosses = lexicalNode && Array.isArray(lexicalNode.glosses)
             ? lexicalNode.glosses
             : [];
 
-          appendSheetHeader(body, "Definitions");
+          if (!options || !options.omitHeader) {
+            appendSheetHeader(body, "Definitions");
+          }
 
           if (!glosses.length) {
             var emptyMessage = document.createElement("p");
@@ -1314,14 +1694,18 @@
           body.appendChild(list);
         }
 
-        function renderExamplesCard(body, lemma) {
+        function renderExamplesCard(body, lemma, options) {
           var lexicalNode = getFocusedLexicalNode();
           var examples = lexicalNode && Array.isArray(lexicalNode.examples)
             ? lexicalNode.examples
             : [];
           var stack;
 
-          appendSheetHeader(body, "Examples", createExampleTranslationToggle());
+          if (!options || !options.omitHeader) {
+            appendSheetHeader(body, "Examples", createExampleTranslationToggle());
+          } else if (!options.omitTranslationToggle) {
+            body.appendChild(createExampleTranslationToggle());
+          }
 
           if (!examples.length) {
             var emptyMessage = document.createElement("p");
@@ -1442,17 +1826,19 @@
           return toggle;
         }
 
-        function renderFormationCard(body, lemma) {
+        function renderFormationCard(body, lemma, options) {
           var changes = getFormationChangeStack(focusedVerbNode);
           var stack;
 
-          appendSheetHeader(body, "Formation");
+          if (!options || !options.omitHeader) {
+            appendSheetHeader(body, "Formation");
+          }
 
           if (!changes.length) {
             var emptyMessage = document.createElement("p");
 
             emptyMessage.className = "gloss-empty";
-            emptyMessage.textContent = "No added pieces yet. Choose a prefix, suffix, or się label to inspect how the form changes.";
+            emptyMessage.textContent = "No added pieces yet. Choose a prefix to inspect how the form changes.";
             body.appendChild(emptyMessage);
             return;
           }
@@ -1680,7 +2066,41 @@
           return aspect || "Unspecified";
         }
 
+        function setDesktopInspectorMode(mode) {
+          if (!desktopInspectorExpanded) {
+            desktopInspectorExpanded = true;
+            desktopExpandedModes.glosses = false;
+            desktopExpandedModes.prefix = false;
+            desktopExpandedModes.examples = false;
+          }
+
+          activeSheetMode = mode;
+          desktopExpandedModes[mode] = !desktopExpandedModes[mode];
+          renderDetailSheet(false);
+          animateDesktopInspectorLayout();
+          scheduleRender();
+        }
+
+        function collapseDesktopInspectorPanels() {
+          desktopExpandedModes.glosses = false;
+          desktopExpandedModes.prefix = false;
+          desktopExpandedModes.examples = false;
+        }
+
+        function toggleDesktopInspector() {
+          if (!usesDesktopInspectorLayout()) {
+            return;
+          }
+
+          settleDesktopInspector(!desktopInspectorExpanded);
+        }
+
         function setActiveSheetMode(mode) {
+          if (usesDesktopInspectorLayout()) {
+            setDesktopInspectorMode(mode);
+            return;
+          }
+
           activeSheetMode = mode;
           renderDetailSheet();
           settleGlossSheet(true);
@@ -1767,6 +2187,202 @@
 
           cancelAnimationFrame(sheetLayoutFrame);
           sheetLayoutFrame = null;
+        }
+
+        function getDesktopInspectorExpandedWidth() {
+          return clampValue(window.innerWidth * 0.3, 380, 520);
+        }
+
+        function getDesktopInspectorCollapsedWidth() {
+          return 72;
+        }
+
+        function getCurrentDesktopInspectorWidth() {
+          var sheet = document.getElementById("gloss-sheet");
+          var rect = sheet.getBoundingClientRect();
+
+          return rect.width || (
+            desktopInspectorExpanded
+              ? getDesktopInspectorExpandedWidth()
+              : getDesktopInspectorCollapsedWidth()
+          );
+        }
+
+        function clearDesktopInspectorTransitionCleanup(sheet) {
+          if (!desktopInspectorTransitionCleanup) {
+            return;
+          }
+
+          sheet.removeEventListener("transitionend", desktopInspectorTransitionCleanup);
+          desktopInspectorTransitionCleanup = null;
+          stopSheetLayoutAnimation();
+        }
+
+        function settleDesktopInspector(expanded, currentWidth) {
+          var sheet = document.getElementById("gloss-sheet");
+          var startWidth = typeof currentWidth === "number"
+            ? currentWidth
+            : getCurrentDesktopInspectorWidth();
+          var targetWidth = expanded
+            ? getDesktopInspectorExpandedWidth()
+            : getDesktopInspectorCollapsedWidth();
+
+          clearDesktopInspectorTransitionCleanup(sheet);
+          sheet.classList.remove("is-desktop-dragging");
+          sheet.style.width = startWidth + "px";
+          sheet.offsetWidth;
+
+          desktopInspectorExpanded = expanded;
+          collapseDesktopInspectorPanels();
+          updateTrayButtons();
+          updateDesktopInspectorState();
+          sheet.style.width = targetWidth + "px";
+
+          if (Math.abs(targetWidth - startWidth) < 0.5) {
+            sheet.style.width = "";
+            renderClockLabels();
+            return;
+          }
+
+          startSheetLayoutAnimation();
+
+          desktopInspectorTransitionCleanup = function (event) {
+            if (event.target !== sheet || event.propertyName !== "width") {
+              return;
+            }
+
+            sheet.style.width = "";
+            clearDesktopInspectorTransitionCleanup(sheet);
+            renderClockLabels();
+          };
+
+          sheet.addEventListener("transitionend", desktopInspectorTransitionCleanup);
+        }
+
+        function handleDesktopInspectorPointerDown(event) {
+          var sheet = document.getElementById("gloss-sheet");
+          var now;
+          var startWidth;
+
+          if (!usesDesktopInspectorLayout() || event.button !== 0) {
+            return;
+          }
+
+          event.preventDefault();
+          clearDesktopInspectorTransitionCleanup(sheet);
+          startWidth = getCurrentDesktopInspectorWidth();
+          now = window.performance.now();
+          desktopInspectorDrag = {
+            pointerId: event.pointerId,
+            startX: event.clientX,
+            startWidth: startWidth,
+            currentWidth: startWidth,
+            minWidth: getDesktopInspectorCollapsedWidth(),
+            maxWidth: getDesktopInspectorExpandedWidth(),
+            lastX: event.clientX,
+            lastTime: now,
+            velocityX: 0,
+            moved: false
+          };
+
+          sheet.classList.add("is-desktop-dragging");
+          sheet.classList.remove("is-desktop-collapsed");
+          sheet.classList.add("is-desktop-expanded");
+          sheet.style.width = startWidth + "px";
+          startSheetLayoutAnimation();
+          event.currentTarget.setPointerCapture(event.pointerId);
+        }
+
+        function handleDesktopInspectorPointerMove(event) {
+          var now;
+          var deltaX;
+          var width;
+          var timeDelta;
+
+          if (!desktopInspectorDrag || event.pointerId !== desktopInspectorDrag.pointerId) {
+            return;
+          }
+
+          event.preventDefault();
+          now = window.performance.now();
+          deltaX = event.clientX - desktopInspectorDrag.startX;
+          width = clampValue(
+            desktopInspectorDrag.startWidth - deltaX,
+            desktopInspectorDrag.minWidth,
+            desktopInspectorDrag.maxWidth
+          );
+          timeDelta = now - desktopInspectorDrag.lastTime;
+
+          if (timeDelta > 0) {
+            desktopInspectorDrag.velocityX = (event.clientX - desktopInspectorDrag.lastX) / timeDelta;
+          }
+
+          desktopInspectorDrag.currentWidth = width;
+          desktopInspectorDrag.lastX = event.clientX;
+          desktopInspectorDrag.lastTime = now;
+          desktopInspectorDrag.moved = desktopInspectorDrag.moved || Math.abs(deltaX) > 4;
+          document.getElementById("gloss-sheet").style.width = width + "px";
+          scheduleRender();
+        }
+
+        function handleDesktopInspectorPointerEnd(event) {
+          var shouldExpand;
+          var flickThreshold = 0.45;
+          var deltaX;
+          var timeDelta;
+          var now;
+
+          if (!desktopInspectorDrag || event.pointerId !== desktopInspectorDrag.pointerId) {
+            return;
+          }
+
+          event.preventDefault();
+          now = window.performance.now();
+          deltaX = event.clientX - desktopInspectorDrag.startX;
+          timeDelta = now - desktopInspectorDrag.lastTime;
+
+          if (timeDelta > 0) {
+            desktopInspectorDrag.velocityX = (event.clientX - desktopInspectorDrag.lastX) / timeDelta;
+          }
+
+          desktopInspectorDrag.currentWidth = clampValue(
+            desktopInspectorDrag.startWidth - deltaX,
+            desktopInspectorDrag.minWidth,
+            desktopInspectorDrag.maxWidth
+          );
+          desktopInspectorDrag.moved = desktopInspectorDrag.moved || Math.abs(deltaX) > 4;
+
+          if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+            event.currentTarget.releasePointerCapture(event.pointerId);
+          }
+
+          if (desktopInspectorDrag.velocityX < -flickThreshold) {
+            shouldExpand = true;
+          } else if (desktopInspectorDrag.velocityX > flickThreshold) {
+            shouldExpand = false;
+          } else {
+            shouldExpand = desktopInspectorDrag.currentWidth >
+              (desktopInspectorDrag.minWidth + desktopInspectorDrag.maxWidth) / 2;
+          }
+
+          if (desktopInspectorDrag.moved || shouldExpand !== desktopInspectorExpanded) {
+            ignoreNextDesktopInspectorClick = true;
+            window.setTimeout(function () {
+              ignoreNextDesktopInspectorClick = false;
+            }, 350);
+          }
+
+          settleDesktopInspector(shouldExpand, desktopInspectorDrag.currentWidth);
+          desktopInspectorDrag = null;
+        }
+
+        function handleDesktopInspectorPointerCancel(event) {
+          if (!desktopInspectorDrag || event.pointerId !== desktopInspectorDrag.pointerId) {
+            return;
+          }
+
+          settleDesktopInspector(desktopInspectorExpanded, desktopInspectorDrag.currentWidth);
+          desktopInspectorDrag = null;
         }
 
         function settleGlossSheet(expanded, currentOffset) {
@@ -2047,15 +2663,37 @@
             ? sheetRect.top - visualGap
             : viewportHeight;
 
+          if (usesDesktopInspectorLayout()) {
+            return viewportHeight;
+          }
+
           return clamp(availableHeight, 1, viewportHeight);
         }
 
-        // Match the SVG coordinate system to the actual viewport while keeping
-        // the graph inside the vertical space not occupied by the bottom sheet.
+        function getVisualizationLayoutWidth(viewportWidth) {
+          var sheet;
+          var sheetRect;
+          var visualGap = 24;
+
+          if (!usesDesktopInspectorLayout()) {
+            return viewportWidth;
+          }
+
+          sheet = document.getElementById("gloss-sheet");
+          sheetRect = sheet ? sheet.getBoundingClientRect() : null;
+
+          return sheetRect
+            ? clamp(sheetRect.left - visualGap, 1, viewportWidth)
+            : viewportWidth;
+        }
+
+        // Match the SVG coordinate system to the available viewport while keeping
+        // the graph clear of the bottom sheet on mobile and the inspector on desktop.
         function syncSceneToViewport() {
           var svg = document.getElementById("scene");
-          var width = svg.clientWidth || window.innerWidth;
+          var viewportWidth = window.innerWidth;
           var viewportHeight = window.innerHeight;
+          var width = getVisualizationLayoutWidth(viewportWidth);
           var height = getVisualizationLayoutHeight(viewportHeight);
           var currentWordLength = Math.max(1, getCurrentWordText().length);
           var helloFontSize =
@@ -2069,6 +2707,11 @@
           var labelFontSizeMin = Math.max(12, helloFontSize * 0.13);
           var layout;
 
+          document.documentElement.style.setProperty("--visualization-width", width + "px");
+          document.documentElement.style.setProperty("--visualization-height", height + "px");
+          svg.style.width = usesDesktopInspectorLayout()
+            ? width + "px"
+            : "";
           svg.style.height = height + "px";
           svg.setAttribute("viewBox", "0 0 " + width + " " + height);
 
@@ -2809,12 +3452,45 @@
           });
         }
 
+        function animateDesktopInspectorLayout() {
+          if (!usesDesktopInspectorLayout()) {
+            return;
+          }
+
+          startSheetLayoutAnimation();
+          window.setTimeout(stopSheetLayoutAnimation, 220);
+        }
+
+        function handleViewportResize() {
+          updateTrayButtons();
+          updateDesktopInspectorState();
+          scheduleRender();
+        }
+
         window.debug = function (enabled) {
           debugEnabled = typeof enabled === "boolean" ? enabled : !debugEnabled;
           renderClockLabels();
 
           return debugEnabled;
         };
+
+        document.getElementById("desktop-inspector-toggle").addEventListener("pointerdown", handleDesktopInspectorPointerDown);
+
+        document.getElementById("desktop-inspector-toggle").addEventListener("pointermove", handleDesktopInspectorPointerMove);
+
+        document.getElementById("desktop-inspector-toggle").addEventListener("pointerup", handleDesktopInspectorPointerEnd);
+
+        document.getElementById("desktop-inspector-toggle").addEventListener("pointercancel", handleDesktopInspectorPointerCancel);
+
+        document.getElementById("desktop-inspector-toggle").addEventListener("click", function (event) {
+          if (ignoreNextDesktopInspectorClick) {
+            event.preventDefault();
+            ignoreNextDesktopInspectorClick = false;
+            return;
+          }
+
+          toggleDesktopInspector();
+        });
 
         document.getElementById("gloss-sheet-handle").addEventListener("pointerdown", handleGlossSheetPointerDown);
 
@@ -2871,18 +3547,97 @@
         updateBackButton();
         renderDetailSheet();
         updateGlossSheetState();
+        updateDesktopInspectorState();
         renderClockLabels();
-        window.addEventListener("resize", scheduleRender);
+        scheduleRender();
+        window.setTimeout(scheduleRender, 220);
+        window.addEventListener("resize", handleViewportResize);
       });
     </script>
   </head>
   <body>
     <div class="controls">
       <button id="back-button" class="nav-button" type="button" aria-label="Go to parent word">
-        &#8592;
+        <span class="nav-button-icon" aria-hidden="true"></span>
       </button>
     </div>
-    <aside id="gloss-sheet" class="gloss-sheet is-peeking" aria-live="polite" aria-label="Glosses">
+    <aside id="gloss-sheet" class="gloss-sheet is-peeking is-desktop-collapsed" aria-live="polite" aria-label="Glosses">
+      <button
+        id="desktop-inspector-toggle"
+        class="desktop-inspector-toggle"
+        type="button"
+        aria-label="Expand inspector"
+        aria-expanded="false"
+      ></button>
+      <nav class="desktop-inspector-nav" aria-label="Inspector sections">
+        <section class="desktop-inspector-section" data-inspector-section="glosses">
+          <div class="desktop-inspector-header">
+            <button
+              class="desktop-inspector-tab is-active"
+              type="button"
+              data-sheet-mode="glosses"
+              data-inspector-tab
+              data-inspector-label="Definitions"
+              aria-controls="desktop-inspector-panel-glosses"
+              aria-expanded="false"
+              aria-pressed="true"
+            >
+              <span class="desktop-inspector-icon" aria-hidden="true">📖</span>
+              <span class="desktop-inspector-label">Definitions</span>
+            </button>
+          </div>
+          <div
+            id="desktop-inspector-panel-glosses"
+            class="desktop-inspector-panel"
+            data-inspector-panel="glosses"
+          ></div>
+        </section>
+        <section class="desktop-inspector-section" data-inspector-section="prefix">
+          <div class="desktop-inspector-header">
+            <button
+              class="desktop-inspector-tab"
+              type="button"
+              data-sheet-mode="prefix"
+              data-inspector-tab
+              data-inspector-label="Formation"
+              aria-controls="desktop-inspector-panel-prefix"
+              aria-expanded="false"
+              aria-pressed="false"
+            >
+              <span class="desktop-inspector-icon" aria-hidden="true">🔨</span>
+              <span class="desktop-inspector-label">Formation</span>
+            </button>
+          </div>
+          <div
+            id="desktop-inspector-panel-prefix"
+            class="desktop-inspector-panel"
+            data-inspector-panel="prefix"
+          ></div>
+        </section>
+        <section class="desktop-inspector-section" data-inspector-section="examples">
+          <div class="desktop-inspector-header">
+            <button
+              class="desktop-inspector-tab"
+              type="button"
+              data-sheet-mode="examples"
+              data-inspector-tab
+              data-inspector-label="Examples"
+              aria-controls="desktop-inspector-panel-examples"
+              aria-expanded="false"
+              aria-pressed="false"
+            >
+              <span class="desktop-inspector-icon" aria-hidden="true">🗨️</span>
+              <span class="desktop-inspector-label">Examples</span>
+            </button>
+            <div class="desktop-inspector-actions" data-inspector-actions="examples"></div>
+          </div>
+          <div
+            id="desktop-inspector-panel-examples"
+            class="desktop-inspector-panel"
+            data-inspector-panel="examples"
+          ></div>
+        </section>
+      </nav>
       <button
         id="gloss-sheet-handle"
         class="gloss-sheet-handle"
