@@ -1,0 +1,130 @@
+{
+  "do-": {
+    "label": "do-",
+    "coreIdea": "reaching a limit / endpoint",
+    "pfvEffect": "completion up to a boundary",
+    "outcomes": ["finish", "add to completion"],
+    "exampleLemma": "dopisać",
+    "exampleGloss": "finish writing / add"
+  },
+  "na-": {
+    "label": "na-",
+    "coreIdea": "accumulation / surface coverage",
+    "pfvEffect": "reaching a sufficient or excessive amount",
+    "outcomes": ["pile up", "do a lot", "saturate"],
+    "exampleLemma": "napisać",
+    "exampleGloss": "write to completion"
+  },
+  "po-": {
+    "label": "po-",
+    "coreIdea": "distributed / bounded small quantity",
+    "pfvEffect": "delimited action for a bit or in small amounts",
+    "outcomes": ["do briefly", "do here and there"],
+    "exampleLemma": "popisać",
+    "exampleGloss": "write a bit"
+  },
+  "prze-": {
+    "label": "prze-",
+    "coreIdea": "through / across / excess",
+    "pfvEffect": "crossing a threshold",
+    "outcomes": ["overdo", "redo", "transfer"],
+    "exampleLemma": "przepisać",
+    "exampleGloss": "copy / rewrite"
+  },
+  "przy-": {
+    "label": "przy-",
+    "coreIdea": "toward / attachment",
+    "pfvEffect": "contact or slight addition",
+    "outcomes": ["attach", "approach", "do slightly"],
+    "exampleLemma": "przykręcić",
+    "exampleGloss": "fasten / tighten"
+  },
+  "roz-": {
+    "label": "roz-",
+    "coreIdea": "apart / dispersal",
+    "pfvEffect": "result = separation",
+    "outcomes": ["split", "scatter", "intensify to destruction"],
+    "exampleLemma": "rozbić",
+    "exampleGloss": "smash apart"
+  },
+  "s-/z-": {
+    "label": "s- / z-",
+    "coreIdea": "downward / together / completion",
+    "pfvEffect": "resultative completion",
+    "outcomes": ["remove", "finish", "bring down"],
+    "exampleLemma": "zrobić",
+    "exampleGloss": "do / make (complete)"
+  },
+  "u-": {
+    "label": "u-",
+    "coreIdea": "away / removal / downward",
+    "pfvEffect": "reduction or detachment",
+    "outcomes": ["cut off", "diminish", "manage to"],
+    "exampleLemma": "uciąć",
+    "exampleGloss": "cut off"
+  },
+  "w-": {
+    "label": "w-",
+    "coreIdea": "inward / into",
+    "pfvEffect": "entering a bounded space",
+    "outcomes": ["insert", "get into", "embed"],
+    "exampleLemma": "włożyć",
+    "exampleGloss": "put in"
+  },
+  "wy-": {
+    "label": "wy-",
+    "coreIdea": "outward / out of",
+    "pfvEffect": "exit from a space / full extraction",
+    "outcomes": ["remove", "extract", "do exhaustively"],
+    "exampleLemma": "wyjąć",
+    "exampleGloss": "take out"
+  },
+  "za-": {
+    "label": "za-",
+    "coreIdea": "behind / start / covering",
+    "pfvEffect": "boundary crossing or onset",
+    "outcomes": ["start", "block", "cover", "go too far"],
+    "exampleLemma": "zacząć",
+    "exampleGloss": "begin"
+  },
+  "od-": {
+    "label": "od-",
+    "coreIdea": "away / back",
+    "pfvEffect": "separation or reversal",
+    "outcomes": ["undo", "return", "detach"],
+    "exampleLemma": "oddać",
+    "exampleGloss": "give back"
+  },
+  "o-": {
+    "label": "o-",
+    "coreIdea": "around / about / affecting a surface",
+    "pfvEffect": "affecting the target fully or peripherally",
+    "outcomes": ["cover", "surround", "scold metaphorically"],
+    "exampleLemma": "omalować",
+    "exampleGloss": "paint around"
+  },
+  "pod-": {
+    "label": "pod-",
+    "coreIdea": "under / slightly",
+    "pfvEffect": "partial or subordinate action",
+    "outcomes": ["do slightly", "sneak under"],
+    "exampleLemma": "podgrzać",
+    "exampleGloss": "warm up a bit"
+  },
+  "nad-": {
+    "label": "nad-",
+    "coreIdea": "over / above",
+    "pfvEffect": "excess or superiority",
+    "outcomes": ["overdo", "surpass"],
+    "exampleLemma": "nadpisać",
+    "exampleGloss": "overwrite"
+  },
+  "ob-": {
+    "label": "ob-",
+    "coreIdea": "around / encircling",
+    "pfvEffect": "action around an object",
+    "outcomes": ["surround", "cover fully"],
+    "exampleLemma": "objechać",
+    "exampleGloss": "go around"
+  }
+}

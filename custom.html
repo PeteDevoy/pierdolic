@@ -18,6 +18,12 @@
         background: #000;
       }
 
+      :root {
+        --sheet-width: min(560px, calc(100vw - 28px));
+        --tray-height: 64px;
+        --sheet-tray-gap: 10px;
+      }
+
       .controls {
         position: fixed;
         top: 16px;
@@ -136,20 +142,22 @@
       .gloss-sheet {
         position: fixed;
         left: 50%;
-        bottom: max(16px, env(safe-area-inset-bottom));
+        bottom: calc(var(--tray-height) + env(safe-area-inset-bottom) + var(--sheet-tray-gap));
         z-index: 2;
-        width: min(560px, calc(100vw - 28px));
+        width: var(--sheet-width);
         max-height: min(34vh, 280px);
-        padding: 16px 18px 18px;
+        padding: 0 18px 18px;
         border: 2px solid rgba(255, 255, 255, 0.86);
         border-radius: 24px;
         background: rgba(0, 0, 0, 0.88);
         color: #fff;
         box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
         transform: translateX(-50%);
         transition: transform 180ms ease;
         box-shadow: 0 18px 60px rgba(0, 0, 0, 0.5);
-        overflow: auto;
+        overflow: hidden;
         will-change: transform;
         -webkit-backdrop-filter: blur(12px);
         backdrop-filter: blur(12px);
@@ -172,6 +180,9 @@
         border: 0;
         background: transparent;
         cursor: pointer;
+        flex: 0 0 auto;
+        position: relative;
+        z-index: 4;
         touch-action: none;
         user-select: none;
       }
@@ -188,6 +199,12 @@
 
       .gloss-sheet.is-dragging .gloss-sheet-handle {
         cursor: grabbing;
+      }
+
+      #gloss-sheet-body {
+        min-height: 0;
+        overflow-y: auto;
+        padding-right: 2px;
       }
 
       .gloss-list {
@@ -212,7 +229,175 @@
         font: 400 16px / 1.4 sans-serif;
       }
 
+      .sheet-section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 0 0 12px;
+      }
+
+      .sheet-section-title {
+        margin: 0;
+        font: 700 18px / 1.2 sans-serif;
+      }
+
+      .formation-stack {
+        display: grid;
+        gap: 10px;
+        font: 400 clamp(15px, 4vw, 18px) / 1.35 sans-serif;
+      }
+
+      .formation-change {
+        padding: 11px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.07);
+      }
+
+      .formation-token {
+        display: block;
+        margin: 0 0 6px;
+        font: 700 clamp(22px, 6vw, 30px) / 1.05 sans-serif;
+      }
+
+      .formation-explanation {
+        margin: 0;
+      }
+
+      .formation-extra {
+        margin: 8px 0 0;
+        color: rgba(255, 255, 255, 0.78);
+      }
+
+      .formation-meta {
+        margin: 10px 0 0;
+        padding-top: 8px;
+        border-top: 1px solid rgba(255, 255, 255, 0.14);
+        color: rgba(255, 255, 255, 0.62);
+        font-size: 13px;
+        line-height: 1.35;
+      }
+
+      .formation-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 8px 0 0;
+      }
+
+      .formation-tag {
+        padding: 3px 8px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+      }
+
+      .example-stack {
+        display: grid;
+        gap: 10px;
+        font: 400 clamp(15px, 4vw, 18px) / 1.35 sans-serif;
+      }
+
+      .example-card {
+        padding: 11px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.07);
+      }
+
+      .example-card strong {
+        display: block;
+        margin: 0 0 8px;
+      }
+
+      .example-translation-toggle {
+        display: flex;
+        flex: 0 0 auto;
+        width: 132px;
+        margin: 0;
+        padding: 2px;
+        border: 1px solid rgba(255, 255, 255, 0.78);
+        border-radius: 999px;
+        box-sizing: border-box;
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .example-translation-option {
+        flex: 1 1 0;
+        min-height: 24px;
+        padding: 0 4px;
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        color: #fff;
+        font-family: sans-serif;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .example-translation-option.is-active {
+        background: #fff;
+        color: #000;
+      }
+
+      .example-translation-text {
+        margin: 0;
+        line-height: 1.45;
+      }
+
+      .bottom-tray {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 3;
+        min-height: calc(var(--tray-height) + env(safe-area-inset-bottom));
+        padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+        box-sizing: border-box;
+        background: rgba(0, 0, 0, 0.94);
+        border-top: 1px solid rgba(255, 255, 255, 0.16);
+      }
+
+      .bottom-tray-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        width: var(--sheet-width);
+        height: 48px;
+        margin: 0 auto;
+      }
+
+      .tray-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+        height: 48px;
+        padding: 0;
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        color: #fff;
+        font-size: 28px;
+        line-height: 1;
+        cursor: pointer;
+      }
+
+      .tray-icon.is-active {
+        background: rgba(255, 255, 255, 0.12);
+      }
+
+      .tray-icon[disabled] {
+        opacity: 0.45;
+        cursor: default;
+      }
+
       @media (max-width: 640px) {
+        :root {
+          --sheet-width: calc(100vw - 20px);
+        }
+
         .controls {
           top: max(12px, env(safe-area-inset-top));
           right: 12px;
@@ -230,9 +415,8 @@
         }
 
         .gloss-sheet {
-          width: calc(100vw - 20px);
           max-height: 38vh;
-          padding: 14px 14px 16px;
+          padding: 0 14px 16px;
           border-radius: 20px;
         }
       }
@@ -249,11 +433,15 @@
         var orbitEntries = [];
         var midpointBias = 0.5;
         var debugEnabled = false;
+        var activeSheetMode = "glosses";
+        var exampleTranslationMode = "natural";
+        var badgeCornerRadiusRatio = 0.22;
         var glossSheetExpanded = false;
         var glossSheetDrag = null;
         var glossSheetTransitionCleanup = null;
         var ignoreNextGlossSheetClick = false;
         var lexicalIndex = new Map();
+        var prefixGuideIndex = {};
         var debugColors = [
           "#4ddcff",
           "#ffb347",
@@ -287,6 +475,19 @@
 
           if (!response.ok) {
             throw new Error("Failed to load verb data: " + response.status);
+          }
+
+          data = await response.json();
+
+          return data;
+        }
+
+        async function loadPrefixGuideData() {
+          var response = await fetch("data/prefix-guide.json");
+          var data;
+
+          if (!response.ok) {
+            throw new Error("Failed to load prefix guide data: " + response.status);
           }
 
           data = await response.json();
@@ -676,6 +877,20 @@
           return typeof prefix === "string" ? prefix.replace(/-$/, "") : "";
         }
 
+        function normalizePrefixGuideKey(prefix) {
+          var token = typeof prefix === "string" ? prefix.trim() : "";
+
+          if (!token) {
+            return "";
+          }
+
+          if (token === "s" || token === "s-" || token === "z" || token === "z-") {
+            return "s-/z-";
+          }
+
+          return token.charAt(token.length - 1) === "-" ? token : token + "-";
+        }
+
         function normalizeSuffix(suffix) {
           return typeof suffix === "string" ? suffix.replace(/^-/, "") : "";
         }
@@ -1004,16 +1219,94 @@
           backButton.disabled = !hasParent;
         }
 
-        function renderGlossSheet() {
+        function getFocusedLexicalNode() {
+          return getLexicalNodeForVerbNode(focusedVerbNode);
+        }
+
+        function getLexicalNodeForVerbNode(node) {
+          return lexicalIndex.get(getNodeVariant(node)) || null;
+        }
+
+        function getPrefixGuide(prefix) {
+          var key = normalizePrefixGuideKey(prefix);
+          var guide = key ? prefixGuideIndex[key] : null;
+          var result;
+
+          if (!guide) {
+            return null;
+          }
+
+          result = {};
+          Object.keys(guide).forEach(function (name) {
+            result[name] = guide[name];
+          });
+          result.key = key;
+
+          return result;
+        }
+
+        function updateTrayButtons() {
+          Array.prototype.forEach.call(
+            document.querySelectorAll("[data-sheet-mode]"),
+            function (button) {
+              var isActive = button.getAttribute("data-sheet-mode") === activeSheetMode;
+
+              button.classList.toggle("is-active", isActive);
+              button.setAttribute("aria-pressed", String(isActive));
+            }
+          );
+        }
+
+        function renderDetailSheet(shouldResetScroll) {
           var sheet = document.getElementById("gloss-sheet");
           var body = document.getElementById("gloss-sheet-body");
           var lemma = getCurrentWordText();
-          var lexicalNode = lexicalIndex.get(lemma);
+
+          body.textContent = "";
+          if (shouldResetScroll !== false) {
+            body.scrollTop = 0;
+          }
+          updateTrayButtons();
+
+          if (activeSheetMode === "prefix") {
+            renderFormationCard(body, lemma);
+            sheet.setAttribute("aria-label", lemma + " prefix lens");
+            return;
+          }
+
+          if (activeSheetMode === "examples") {
+            renderExamplesCard(body, lemma);
+            sheet.setAttribute("aria-label", lemma + " examples");
+            return;
+          }
+
+          renderGlossesCard(body, lemma);
+          sheet.setAttribute("aria-label", lemma + " glosses");
+        }
+
+        function appendSheetHeader(body, titleText, trailingNode) {
+          var header = document.createElement("div");
+          var title = document.createElement("h2");
+
+          header.className = "sheet-section-header";
+          title.className = "sheet-section-title";
+          title.textContent = titleText;
+          header.appendChild(title);
+
+          if (trailingNode) {
+            header.appendChild(trailingNode);
+          }
+
+          body.appendChild(header);
+        }
+
+        function renderGlossesCard(body, lemma) {
+          var lexicalNode = getFocusedLexicalNode();
           var glosses = lexicalNode && Array.isArray(lexicalNode.glosses)
             ? lexicalNode.glosses
             : [];
 
-          body.textContent = "";
+          appendSheetHeader(body, "Definitions");
 
           if (!glosses.length) {
             var emptyMessage = document.createElement("p");
@@ -1021,7 +1314,6 @@
             emptyMessage.className = "gloss-empty";
             emptyMessage.textContent = "No glosses available yet.";
             body.appendChild(emptyMessage);
-            sheet.setAttribute("aria-label", lemma + " glosses");
 
             return;
           }
@@ -1037,7 +1329,378 @@
           });
 
           body.appendChild(list);
-          sheet.setAttribute("aria-label", lemma + " glosses");
+        }
+
+        function renderExamplesCard(body, lemma) {
+          var lexicalNode = getFocusedLexicalNode();
+          var examples = lexicalNode && Array.isArray(lexicalNode.examples)
+            ? lexicalNode.examples
+            : [];
+          var stack;
+
+          appendSheetHeader(body, "Examples", createExampleTranslationToggle());
+
+          if (!examples.length) {
+            var emptyMessage = document.createElement("p");
+
+            emptyMessage.className = "gloss-empty";
+            emptyMessage.textContent = "No examples available yet.";
+            body.appendChild(emptyMessage);
+
+            return;
+          }
+
+          stack = document.createElement("div");
+          stack.className = "example-stack";
+          examples.forEach(function (example) {
+            stack.appendChild(renderExampleCard(example));
+          });
+
+          body.appendChild(stack);
+        }
+
+        function renderExampleCard(example) {
+          var card = document.createElement("article");
+          var polish = document.createElement("strong");
+          var translation;
+
+          card.className = "example-card";
+          polish.textContent = example && example.polish ? example.polish : "Example";
+          card.appendChild(polish);
+          translation = renderExampleTranslation(example);
+
+          if (translation) {
+            card.appendChild(translation);
+          }
+
+          return card;
+        }
+
+        function getExampleTranslationText(example) {
+          if (!example || typeof example !== "object") {
+            return "";
+          }
+
+          if (exampleTranslationMode === "literal" && example.literalEnglish) {
+            return example.literalEnglish;
+          }
+
+          if (exampleTranslationMode === "natural" && example.naturalEnglish) {
+            return example.naturalEnglish;
+          }
+
+          return example.naturalEnglish || example.literalEnglish || "";
+        }
+
+        function renderExampleTranslation(example) {
+          var value = getExampleTranslationText(example);
+          var text;
+
+          if (!value) {
+            return null;
+          }
+
+          text = document.createElement("p");
+          text.className = "example-translation-text";
+          text.textContent = value;
+
+          return text;
+        }
+
+        function createExampleTranslationToggle() {
+          var translations = {
+            literal: true,
+            natural: true
+          };
+          var modes = [
+            { key: "literal", label: "Literal" },
+            { key: "natural", label: "Natural" }
+          ];
+          var availableModes = modes.filter(function (mode) {
+            return Boolean(translations[mode.key]);
+          });
+          var toggle;
+
+          toggle = document.createElement("div");
+          toggle.className = "example-translation-toggle";
+          toggle.setAttribute("role", "group");
+          toggle.setAttribute("aria-label", "Translation style");
+
+          function setTranslationMode(modeKey) {
+            exampleTranslationMode = modeKey;
+            Array.prototype.forEach.call(
+              toggle.querySelectorAll(".example-translation-option"),
+              function (button) {
+                var isActive = button.getAttribute("data-translation-mode") === exampleTranslationMode;
+
+                button.classList.toggle("is-active", isActive);
+                button.setAttribute("aria-pressed", String(isActive));
+              }
+            );
+          }
+
+          modes.forEach(function (mode) {
+            var button = document.createElement("button");
+
+            button.className = "example-translation-option";
+            button.type = "button";
+            button.textContent = mode.label;
+            button.setAttribute("data-translation-mode", mode.key);
+            button.setAttribute("aria-pressed", "false");
+            button.addEventListener("click", function () {
+              setTranslationMode(mode.key);
+              renderDetailSheet(false);
+            });
+            toggle.appendChild(button);
+          });
+
+          setTranslationMode(exampleTranslationMode);
+
+          return toggle;
+        }
+
+        function renderFormationCard(body, lemma) {
+          var changes = getFormationChangeStack(focusedVerbNode);
+          var stack;
+
+          appendSheetHeader(body, "Formation");
+
+          if (!changes.length) {
+            var emptyMessage = document.createElement("p");
+
+            emptyMessage.className = "gloss-empty";
+            emptyMessage.textContent = "No added pieces yet. Choose a prefix, suffix, or się label to inspect how the form changes.";
+            body.appendChild(emptyMessage);
+            return;
+          }
+
+          stack = document.createElement("div");
+          stack.className = "formation-stack";
+          changes.forEach(function (change) {
+            stack.appendChild(renderFormationChange(change));
+          });
+          body.appendChild(stack);
+        }
+
+        function getFormationChangeStack(node) {
+          var changes = [];
+          var currentNode = node;
+          var parentNode;
+
+          while (currentNode && getParentVerbNode(currentNode)) {
+            parentNode = getParentVerbNode(currentNode);
+            getFormationChangesBetween(parentNode, currentNode).forEach(function (change) {
+              changes.push(change);
+            });
+            currentNode = parentNode;
+          }
+
+          return changes;
+        }
+
+        function getFormationChangesBetween(parentNode, childNode) {
+          var changes = [];
+          var parentPrefix = getNodePrefix(parentNode);
+          var childPrefix = getNodePrefix(childNode);
+          var childLexicalNode = getLexicalNodeForVerbNode(childNode);
+          var derivation = childLexicalNode && childLexicalNode.derivation
+            ? childLexicalNode.derivation
+            : "";
+          var aspect = childLexicalNode && childLexicalNode.aspect ? childLexicalNode.aspect : "";
+          var substitution = childNode && childNode.suffixSubstitution
+            ? childNode.suffixSubstitution
+            : null;
+
+          if (
+            childNode &&
+            childNode.reflexiveTarget &&
+            childNode.reflexiveTarget !== (parentNode && parentNode.reflexiveTarget)
+          ) {
+            changes.push(createReflexiveFormationChange(childNode, derivation, aspect));
+          }
+
+          if (substitution && substitution.from && substitution.to) {
+            changes.push(createSuffixFormationChange(parentNode, childNode, derivation, aspect));
+          } else if (parentNode && childNode && parentNode.suffix !== childNode.suffix && childNode.suffix) {
+            changes.push(createSimpleSuffixFormationChange(childNode, derivation, aspect));
+          }
+
+          if (childPrefix && childPrefix !== parentPrefix) {
+            changes.push(createPrefixFormationChange(childPrefix, derivation, aspect));
+          }
+
+          return changes;
+        }
+
+        function createPrefixFormationChange(prefixToken, derivation, aspect) {
+          var prefixGuide = getPrefixGuide(prefixToken);
+          var displayToken = prefixGuide ? prefixGuide.label : formatPrefixLabel(prefixToken);
+          var change = {
+            token: displayToken,
+            explanation: prefixGuide
+              ? prefixGuide.coreIdea
+              : "This piece is added before the root. No general guide note has been added for it yet.",
+            extras: [],
+            tags: prefixGuide && Array.isArray(prefixGuide.outcomes) ? prefixGuide.outcomes : [],
+            meta: []
+          };
+
+          if (prefixGuide && prefixGuide.exampleLemma && prefixGuide.exampleGloss) {
+            change.extras.push("Common example: " + prefixGuide.exampleLemma + " = " + prefixGuide.exampleGloss + ".");
+          }
+
+          if (prefixGuide && prefixGuide.pfvEffect) {
+            change.meta.push("Prefix aspect tendency: " + prefixGuide.pfvEffect + ".");
+          }
+
+          appendAdvancedFormationNotes(change, derivation, aspect);
+
+          return change;
+        }
+
+        function createSuffixFormationChange(parentNode, childNode, derivation, aspect) {
+          var substitution = childNode.suffixSubstitution;
+          var parentStem = parentNode && parentNode.stem ? parentNode.stem : "";
+          var currentStem = childNode && childNode.stem ? childNode.stem : "";
+          var change = {
+            token: formatSuffixLabel(substitution.to),
+            explanation: "This ending usually points to an imperfective partner: ongoing, repeated, or habitual action.",
+            extras: [
+              "Visible change: " + formatSuffixLabel(substitution.from) + " becomes " + formatSuffixLabel(substitution.to) + "."
+            ],
+            tags: [],
+            meta: []
+          };
+
+          if (parentStem && currentStem && parentStem !== currentStem) {
+            change.extras.push("The stem also shifts: " + parentStem + "- becomes " + currentStem + "-.");
+          }
+
+          appendAdvancedFormationNotes(change, derivation, aspect);
+
+          return change;
+        }
+
+        function createSimpleSuffixFormationChange(childNode, derivation, aspect) {
+          var change = {
+            token: formatSuffixLabel(childNode.suffix),
+            explanation: "This ending helps make the displayed infinitive form.",
+            extras: [],
+            tags: [],
+            meta: []
+          };
+
+          appendAdvancedFormationNotes(change, derivation, aspect);
+
+          return change;
+        }
+
+        function createReflexiveFormationChange(childNode, derivation, aspect) {
+          var change = {
+            token: childNode.reflexiveTarget,
+            explanation: "This marker changes the verb into a self-involved, event-like, or idiomatic form. It often does not mean literal self-action.",
+            extras: ["Read it as part of the whole expression, not as a detachable English word."],
+            tags: [],
+            meta: []
+          };
+
+          appendAdvancedFormationNotes(change, derivation, aspect);
+
+          return change;
+        }
+
+        function appendAdvancedFormationNotes(change, derivation, aspect) {
+          if (aspect) {
+            change.meta.push("Aspect: " + formatAspectLabel(aspect) + ".");
+          }
+
+          if (derivation) {
+            change.meta.push("Advanced label: " + derivation + ".");
+          }
+        }
+
+        function renderFormationChange(change) {
+          var card = document.createElement("article");
+          var token = document.createElement("h3");
+          var explanation = document.createElement("p");
+
+          card.className = "formation-change";
+          token.className = "formation-token";
+          explanation.className = "formation-explanation";
+          token.textContent = change.token;
+          explanation.textContent = change.explanation;
+          card.appendChild(token);
+          card.appendChild(explanation);
+
+          (change.extras || []).forEach(function (extra) {
+            var extraNode = document.createElement("p");
+
+            extraNode.className = "formation-extra";
+            extraNode.textContent = extra;
+            card.appendChild(extraNode);
+          });
+
+          if (change.tags && change.tags.length) {
+            card.appendChild(renderFormationTags(change.tags));
+          }
+
+          if (change.meta && change.meta.length) {
+            card.appendChild(renderFormationMeta(change.meta));
+          }
+
+          return card;
+        }
+
+        function renderFormationTags(tags) {
+          var list = document.createElement("div");
+
+          list.className = "formation-tags";
+          tags.forEach(function (tagText) {
+            var tag = document.createElement("span");
+
+            tag.className = "formation-tag";
+            tag.textContent = tagText;
+            list.appendChild(tag);
+          });
+
+          return list;
+        }
+
+        function renderFormationMeta(metaItems) {
+          var meta = document.createElement("p");
+
+          meta.className = "formation-meta";
+          meta.textContent = metaItems.join(" ");
+
+          return meta;
+        }
+
+        function formatPrefixLabel(prefixToken) {
+          if (!prefixToken) {
+            return "";
+          }
+
+          return prefixToken.charAt(prefixToken.length - 1) === "-"
+            ? prefixToken
+            : prefixToken + "-";
+        }
+
+        function formatAspectLabel(aspect) {
+          if (aspect === "perfective") {
+            return "Perfective";
+          }
+
+          if (aspect === "imperfective") {
+            return "Imperfective";
+          }
+
+          return aspect || "Unspecified";
+        }
+
+        function setActiveSheetMode(mode) {
+          activeSheetMode = mode;
+          renderDetailSheet();
+          settleGlossSheet(true);
         }
 
         function updateGlossSheetState() {
@@ -1389,7 +2052,7 @@
           focusedVerbNode = node;
           orbitEntries = getOrbitEntries(node);
           updateBackButton();
-          renderGlossSheet();
+          renderDetailSheet();
           renderClockLabels();
         }
 
@@ -1488,7 +2151,7 @@
           var width = wordRect.maxX - wordRect.minX;
           var height = wordRect.maxY - wordRect.minY;
           var borderState = getCenterWordBorderState();
-          var radius = Math.min(24, height / 2, width / 5);
+          var radius = Math.min(width, height) * badgeCornerRadiusRatio;
           var borderShape = getCenterWordBorderShapeData(
             width,
             height,
@@ -1944,7 +2607,7 @@
             badgePadding = Math.max(layout.badgeMinPadding, labelFontSize * layout.badgePaddingFactor);
             badgeWidth = textWidth + badgePadding * 2 + layout.badgeStrokeWidth;
             badgeHeight = textHeight + badgePadding * 2 + layout.badgeStrokeWidth;
-            badgeCornerRadius = Math.min(badgeWidth, badgeHeight) * 0.22;
+            badgeCornerRadius = Math.min(badgeWidth, badgeHeight) * badgeCornerRadiusRatio;
             badgeShape = getBadgeShapeData(
               badgeWidth,
               badgeHeight,
@@ -2173,6 +2836,15 @@
           settleGlossSheet(!glossSheetExpanded);
         });
 
+        Array.prototype.forEach.call(
+          document.querySelectorAll("[data-sheet-mode]"),
+          function (button) {
+            button.addEventListener("click", function () {
+              setActiveSheetMode(button.getAttribute("data-sheet-mode"));
+            });
+          }
+        );
+
         document.getElementById("back-button").addEventListener("click", function () {
           var parentVerbNode = getParentVerbNode(focusedVerbNode);
 
@@ -2182,10 +2854,15 @@
         });
 
         try {
-          var loadedData = await Promise.all([loadVerbData(), loadLexicalData()]);
+          var loadedData = await Promise.all([
+            loadVerbData(),
+            loadLexicalData(),
+            loadPrefixGuideData()
+          ]);
 
           rootVerbNode = loadedData[0];
           indexLexicalData(loadedData[1]);
+          prefixGuideIndex = loadedData[2];
           linkVerbTree(rootVerbNode, null);
           focusedVerbNode = rootVerbNode;
           orbitEntries = getOrbitEntries(rootVerbNode);
@@ -2194,7 +2871,7 @@
         }
 
         updateBackButton();
-        renderGlossSheet();
+        renderDetailSheet();
         updateGlossSheetState();
         renderClockLabels();
         window.addEventListener("resize", scheduleRender);
@@ -2221,6 +2898,31 @@
       ></button>
       <div id="gloss-sheet-body"></div>
     </aside>
+    <nav class="bottom-tray" aria-label="Detail modes">
+      <div class="bottom-tray-inner">
+        <button
+          class="tray-icon is-active"
+          type="button"
+          data-sheet-mode="glosses"
+          aria-label="Definition and glosses"
+          aria-pressed="true"
+        >📖</button>
+        <button
+          class="tray-icon"
+          type="button"
+          data-sheet-mode="prefix"
+          aria-label="Word construction"
+          aria-pressed="false"
+        >🔨</button>
+        <button
+          class="tray-icon"
+          type="button"
+          aria-label="Examples"
+          data-sheet-mode="examples"
+          aria-pressed="false"
+        >🗨️</button>
+      </div>
+    </nav>
     <svg
       id="scene"
       xmlns="http://www.w3.org/2000/svg"
