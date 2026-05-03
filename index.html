@@ -27,6 +27,13 @@
         --visualization-control-gap: 16px;
         --visualization-width: 100vw;
         --visualization-height: 100vh;
+        --bottom-safe-area: 0px;
+      }
+
+      @supports (-webkit-touch-callout: none) {
+        :root {
+          --bottom-safe-area: env(safe-area-inset-bottom);
+        }
       }
 
       .controls {
@@ -142,7 +149,7 @@
       .gloss-sheet {
         position: fixed;
         left: 50%;
-        bottom: calc(var(--tray-height) + env(safe-area-inset-bottom) + var(--sheet-tray-gap));
+        bottom: calc(var(--tray-height) + var(--bottom-safe-area) + var(--sheet-tray-gap));
         z-index: 2;
         width: var(--sheet-width);
         max-height: min(34vh, 280px);
@@ -159,6 +166,7 @@
         box-shadow: 0 18px 60px rgba(0, 0, 0, 0.5);
         overflow: hidden;
         will-change: transform;
+        touch-action: pan-y;
         -webkit-backdrop-filter: blur(12px);
         backdrop-filter: blur(12px);
       }
@@ -173,7 +181,7 @@
 
       .gloss-sheet-handle {
         display: block;
-        width: 44px;
+        width: 100%;
         height: 20px;
         margin: 0 auto 14px;
         padding: 0;
@@ -192,7 +200,7 @@
         display: block;
         width: 44px;
         height: 4px;
-        margin: 8px 0;
+        margin: 8px auto;
         border-radius: 999px;
         background: rgba(255, 255, 255, 0.66);
       }
@@ -210,6 +218,7 @@
         min-height: 0;
         overflow-y: auto;
         padding-right: 2px;
+        touch-action: pan-y;
       }
 
       .gloss-list {
@@ -357,8 +366,8 @@
         right: 0;
         bottom: 0;
         z-index: 3;
-        min-height: calc(var(--tray-height) + env(safe-area-inset-bottom));
-        padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+        min-height: calc(var(--tray-height) + var(--bottom-safe-area));
+        padding: 8px 0 calc(8px + var(--bottom-safe-area));
         box-sizing: border-box;
         background: rgba(0, 0, 0, 0.94);
         border-top: 1px solid rgba(255, 255, 255, 0.16);
@@ -425,6 +434,16 @@
           --desktop-inspector-width: clamp(380px, 30vw, 520px);
           --desktop-inspector-rail-width: 72px;
           --desktop-inspector-edge-gap: 24px;
+          --desktop-inspector-nav-gap: 10px;
+          --desktop-inspector-nav-padding: 10px;
+          --desktop-inspector-section-height: 64px;
+          --desktop-inspector-stack-height: calc(
+            var(--desktop-inspector-section-height) +
+            var(--desktop-inspector-section-height) +
+            var(--desktop-inspector-section-height) +
+            var(--desktop-inspector-nav-gap) +
+            var(--desktop-inspector-nav-gap)
+          );
           --visualization-sidebar-gap: 24px;
           --visualization-width: calc(
             100vw -
@@ -473,20 +492,25 @@
           transition: none;
         }
 
+        .gloss-sheet.is-desktop-dragging .desktop-inspector-toggle {
+          transition: none;
+        }
+
         .gloss-sheet-handle {
           display: none;
         }
 
         .desktop-inspector-toggle {
           position: absolute;
-          left: -18px;
-          top: 50%;
-          transform: translateY(-50%);
+          left: -24px;
+          top: var(--desktop-inspector-toggle-top, 0);
+          bottom: auto;
+          transform: none;
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 16px;
-          height: 64px;
+          width: 28px;
+          height: var(--desktop-inspector-toggle-height, 100%);
           padding: 0;
           border: 0;
           border-radius: 999px;
@@ -495,6 +519,9 @@
           cursor: pointer;
           touch-action: none;
           user-select: none;
+          transition:
+            top 180ms ease,
+            height 180ms ease;
         }
 
         .desktop-inspector-toggle::before {
@@ -510,11 +537,11 @@
           display: flex;
           flex: 1 1 auto;
           flex-direction: column;
-          gap: 10px;
+          gap: var(--desktop-inspector-nav-gap);
           min-height: 0;
           height: 100%;
           max-height: none;
-          padding: 10px 0;
+          padding: var(--desktop-inspector-nav-padding) 0;
           box-sizing: border-box;
           overflow: hidden;
         }
@@ -635,6 +662,16 @@
           width: var(--desktop-inspector-rail-width);
         }
 
+        .gloss-sheet.is-desktop-collapsed .desktop-inspector-toggle {
+          --desktop-inspector-toggle-top: var(--desktop-inspector-nav-padding);
+          --desktop-inspector-toggle-height: var(--desktop-inspector-stack-height);
+        }
+
+        .gloss-sheet.is-desktop-expanded:not(.has-desktop-expanded-panel) .desktop-inspector-toggle {
+          --desktop-inspector-toggle-top: var(--desktop-inspector-nav-padding);
+          --desktop-inspector-toggle-height: var(--desktop-inspector-stack-height);
+        }
+
         .gloss-sheet.is-desktop-collapsed .desktop-inspector-header {
           padding: 8px;
         }
@@ -682,6 +719,7 @@
         var orbitEntries = [];
         var midpointBias = 0.5;
         var debugEnabled = false;
+        var sheetModes = ["glosses", "prefix", "examples"];
         var activeSheetMode = "glosses";
         var exampleTranslationMode = "natural";
         var badgeCornerRadiusRatio = 0.22;
@@ -696,6 +734,7 @@
         var desktopInspectorTransitionCleanup = null;
         var ignoreNextDesktopInspectorClick = false;
         var glossSheetDrag = null;
+        var glossSheetSwipe = null;
         var glossSheetTransitionCleanup = null;
         var ignoreNextGlossSheetClick = false;
         var lexicalIndex = new Map();
@@ -2106,6 +2145,174 @@
           settleGlossSheet(true);
         }
 
+        function getWrappedSheetMode(direction) {
+          var currentIndex = sheetModes.indexOf(activeSheetMode);
+          var nextIndex;
+
+          if (currentIndex < 0) {
+            currentIndex = 0;
+          }
+
+          nextIndex = (currentIndex + direction + sheetModes.length) % sheetModes.length;
+
+          return sheetModes[nextIndex];
+        }
+
+        function isInteractiveSwipeTarget(target) {
+          return Boolean(
+            target.closest &&
+            target.closest("button, a, input, textarea, select, [contenteditable='true'], .gloss-sheet-handle")
+          );
+        }
+
+        function hasActiveTextSelection() {
+          var selection = window.getSelection ? window.getSelection() : null;
+
+          return Boolean(selection && selection.rangeCount && !selection.isCollapsed);
+        }
+
+        function releaseGlossSheetSwipeCapture(pointerId) {
+          var sheet = document.getElementById("gloss-sheet");
+
+          if (sheet && sheet.hasPointerCapture && sheet.hasPointerCapture(pointerId)) {
+            sheet.releasePointerCapture(pointerId);
+          }
+        }
+
+        function cancelGlossSheetSwipe() {
+          if (!glossSheetSwipe) {
+            return;
+          }
+
+          releaseGlossSheetSwipeCapture(glossSheetSwipe.pointerId);
+          glossSheetSwipe = null;
+        }
+
+        function handleGlossSheetSwipePointerDown(event) {
+          if (
+            usesDesktopInspectorLayout() ||
+            event.button !== 0 ||
+            isInteractiveSwipeTarget(event.target) ||
+            !event.target.closest("#gloss-sheet") ||
+            hasActiveTextSelection()
+          ) {
+            return;
+          }
+
+          glossSheetSwipe = {
+            pointerId: event.pointerId,
+            startX: event.clientX,
+            startY: event.clientY,
+            startTime: window.performance.now(),
+            isSwiping: false,
+            isCancelled: false,
+            hasSwitched: false
+          };
+        }
+
+        function handleGlossSheetSwipePointerMove(event) {
+          var deltaX;
+          var deltaY;
+          var absX;
+          var absY;
+          var sheet;
+          var swipeDistance;
+          var elapsedTime;
+
+          if (!glossSheetSwipe || event.pointerId !== glossSheetSwipe.pointerId) {
+            return;
+          }
+
+          if (hasActiveTextSelection()) {
+            cancelGlossSheetSwipe();
+            return;
+          }
+
+          deltaX = event.clientX - glossSheetSwipe.startX;
+          deltaY = event.clientY - glossSheetSwipe.startY;
+          absX = Math.abs(deltaX);
+          absY = Math.abs(deltaY);
+          elapsedTime = window.performance.now() - glossSheetSwipe.startTime;
+
+          if (glossSheetSwipe.isCancelled) {
+            return;
+          }
+
+          if (!glossSheetSwipe.isSwiping) {
+            if (elapsedTime > 280) {
+              glossSheetSwipe.isCancelled = true;
+              return;
+            }
+
+            if (absX < 10 && absY < 10) {
+              return;
+            }
+
+            if (absY > absX * 1.15) {
+              glossSheetSwipe.isCancelled = true;
+              return;
+            }
+
+            if (absX < 14 || absX < absY * 1.15) {
+              return;
+            }
+
+            glossSheetSwipe.isSwiping = true;
+            sheet = document.getElementById("gloss-sheet");
+
+            if (sheet && sheet.setPointerCapture) {
+              sheet.setPointerCapture(event.pointerId);
+            }
+          }
+
+          event.preventDefault();
+
+          swipeDistance = Math.min(72, Math.max(32, window.innerWidth * 0.11));
+
+          if (!glossSheetSwipe.hasSwitched && absX >= swipeDistance) {
+            glossSheetSwipe.hasSwitched = true;
+            setActiveSheetMode(getWrappedSheetMode(deltaX < 0 ? -1 : 1));
+          }
+        }
+
+        function handleGlossSheetSwipePointerEnd(event) {
+          var deltaX;
+          var deltaY;
+          var swipeDistance;
+
+          if (!glossSheetSwipe || event.pointerId !== glossSheetSwipe.pointerId) {
+            return;
+          }
+
+          releaseGlossSheetSwipeCapture(event.pointerId);
+
+          if (
+            !hasActiveTextSelection() &&
+            !glossSheetSwipe.isCancelled &&
+            glossSheetSwipe.isSwiping &&
+            !glossSheetSwipe.hasSwitched
+          ) {
+            deltaX = event.clientX - glossSheetSwipe.startX;
+            deltaY = event.clientY - glossSheetSwipe.startY;
+            swipeDistance = Math.min(72, Math.max(32, window.innerWidth * 0.11));
+
+            if (Math.abs(deltaX) >= swipeDistance && Math.abs(deltaX) > Math.abs(deltaY)) {
+              event.preventDefault();
+              setActiveSheetMode(getWrappedSheetMode(deltaX < 0 ? -1 : 1));
+            }
+          }
+
+          glossSheetSwipe = null;
+        }
+
+        function handleGlossSheetSwipePointerCancel(event) {
+          if (!glossSheetSwipe || event.pointerId !== glossSheetSwipe.pointerId) {
+            return;
+          }
+
+          cancelGlossSheetSwipe();
+        }
+
         function updateGlossSheetState() {
           var sheet = document.getElementById("gloss-sheet");
           var handle = document.getElementById("gloss-sheet-handle");
@@ -3508,6 +3715,20 @@
           }
 
           settleGlossSheet(!glossSheetExpanded);
+        });
+
+        document.getElementById("gloss-sheet").addEventListener("pointerdown", handleGlossSheetSwipePointerDown);
+
+        document.getElementById("gloss-sheet").addEventListener("pointermove", handleGlossSheetSwipePointerMove);
+
+        document.getElementById("gloss-sheet").addEventListener("pointerup", handleGlossSheetSwipePointerEnd);
+
+        document.getElementById("gloss-sheet").addEventListener("pointercancel", handleGlossSheetSwipePointerCancel);
+
+        document.addEventListener("selectionchange", function () {
+          if (hasActiveTextSelection()) {
+            cancelGlossSheetSwipe();
+          }
         });
 
         Array.prototype.forEach.call(
