@@ -626,24 +626,31 @@
           "reflexive": true,
           "register": "vulgar",
           "glosses": [
-            "to go to shit / break down badly",
-            "to get messed up / become chaotic"
+            "to go to shit (internally / mentally)",
+            "to lose one's sense / lose the plot",
+            "to become messed up / disordered"
           ],
           "examples": [
             {
-              "polish": "Wszystko się popierdoliło w ostatniej chwili.",
-              "literalEnglish": "Everything itself fucked-up in the last moment.",
-              "naturalEnglish": "Everything went to shit at the last moment."
+              "polish": "Wielu ludziom w główkach się popierdoliło.",
+              "literalEnglish": "To-many people in little-heads itself fucked-up.",
+              "naturalEnglish": "A lot of people have lost the plot."
+            },
+            {
+              "polish": "Coś mi się popierdoliło z tymi datami.",
+              "literalEnglish": "Something to-me itself fucked-up with these dates.",
+              "naturalEnglish": "I got the dates mixed up."
             }
           ],
-          "notes": "Reflexive 'się' removes a clear agent and shifts focus to the system/state collapsing or degrading. Common for describing situations, systems, or plans going wrong rather than a person actively causing it.",
+          "notes": "Reflexive form indicating a completed negative change of state, often mental, cognitive, or systemic. Commonly used with a dative experiencer (e.g. 'mi', 'mu', 'ludziom') to mean that something has gone wrong internally rather than being actively caused. The prefix 'po-' contributes a bounded, completed event, often with an implicit sense of deterioration or breakdown.",
           "conjugation": {
             "nonPast1sg": "popierdolę się",
             "nonPast3sg": "popierdoli się",
-            "pastMascSg": "popierdolił się"
+            "pastMascSg": "popierdolił się",
+            "pastNeutSg": "popierdoliło się"
           },
           "partnerId": "pierdolic-sie",
-          "derivation": "reflexivization",
+          "derivation": "prefixation + perfectivization + reflexivization",
           "children": []
         }
       ]
